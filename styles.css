@@ -25,10 +25,12 @@ nav .button {
     margin-left: 10px;
     text-decoration: none;
     border-radius: 5px;
+    font-size: 16px;
 }
 
 nav .button:hover {
     background-color: #777;
+    font-size: 16px;
 }
 
 main {
@@ -41,25 +43,39 @@ main {
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
 }
 
 .thread h3 {
     margin-top: 0;
 }
 
-.thread .button {
-    display: inline-block;
-    background-color: #007bff;
-    color: #fff;
-    padding: 10px 20px;
+.thread h3 > a:link, .thread h3 > a:visited {
+    color: #555555;
     text-decoration: none;
-    border-radius: 5px;
-    margin-top: 10px;
 }
 
-.thread .button:hover {
-    background-color: #0056b3;
+.thread h3 > a:hover{
+    color: #202020;
+    text-decoration: underline;
 }
+
+.thread-title {
+    margin-right: auto;
+}
+
+.thread-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.thread-info div {
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+
 
 /* Modal */
 .modal {
@@ -107,7 +123,10 @@ form label,
 form input,
 form button {
     margin-bottom: 10px;
+    font-size: 16px;
 }
+
+
 
 .messages {
     background-color: #fff;
@@ -144,7 +163,7 @@ form button {
     margin-bottom: 10px;
 }
 
-.new-message form button {
+.new-message form button, form button {
     background-color: #007bff;
     color: #fff;
     padding: 10px 20px;
@@ -153,6 +172,22 @@ form button {
     cursor: pointer;
 }
 
-.new-message form button:hover {
+.new-message form button:hover, form button:hover {
     background-color: #0056b3;
+}
+
+.icon-button {
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.icon-button img {
+    width: 24px; /* Beispielbreite, kann angepasst werden */
+    height: 24px; /* Beispielhöhe, kann angepasst werden */
+}
+
+.deleteInfo {
+    margin-bottom: 20px;
 }

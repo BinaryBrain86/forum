@@ -43,21 +43,32 @@ $msg_stmt->bind_result($msg_user_name, $msg_date_time, $msg_content);
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($thread_name); ?></title>
     <link rel="stylesheet" href="styles.css">
+    <script>
+        function openModal(sender) {
+            if (sender != null) {
+                document.getElementById(sender).style.display = 'block';
+            }
+        }
+
+        function closeModal(sender) {
+            if (sender != null) {
+                document.getElementById(sender).style.display = 'none';
+            }
+        }
+    </script>
 </head>
 <body>
     <header>
         <h1><?php echo htmlspecialchars($thread_name); ?></h1>
         <nav>
-            <a href="index.php" class="button">Zurück zum Forum</a>
+            <a href="index.php" class="button">Back to overview</a>
             <?php if (isset($_SESSION['username'])): ?>
-                <span>Hallo, <?php echo htmlspecialchars($_SESSION['username']); ?>!</span>
-                <a href="account.php" class="button">Mein Account</a>
-                <a href="logout.php" class="button">Logout</a>
+                <a href="account.php" class="button">My Account</a>
+                <a href="logout.php" class="button">Logout <?php if (isset($_SESSION['username'])): echo htmlspecialchars($_SESSION['username']); endif; ?></a>
             <?php else: ?>
-                <a href="login.html" class="button">Login</a>
+                <button onclick="openModal('loginModal')" class="button">Login</button>
             <?php endif; ?>
         </nav>
     </header>
@@ -73,15 +84,33 @@ $msg_stmt->bind_result($msg_user_name, $msg_date_time, $msg_content);
         </div>
         <?php if (isset($_SESSION['username'])): ?>
             <div class="new-message">
-                <h2>Neue Nachricht schreiben</h2>
+                <h2>Write new message</h2>
                 <form action="view_thread.php?thread_id=<?php echo $thread_id; ?>" method="post">
                     <textarea name="message" required></textarea>
-                    <button type="submit">Senden</button>
+                    <button type="submit">Send</button>
                 </form>
             </div>
         <?php else: ?>
-            <p>Bitte <a href="login.html">loggen Sie sich ein</a>, um eine Nachricht zu schreiben.</p>
+            <p><button onclick="openModal('loginModal')" class="button">Login</button>, to write a message.</p>
         <?php endif; ?>
     </main>
+    <?php if (isset($_SESSION['username']) == null): ?>
+         <!-- Modal für neuen Thread -->
+         <div id="loginModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('loginModal')">&times;</span>
+                <h2>Login</h2>
+                <form action="login.php" method="post">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                    
+                    <button type="submit">Login</button>
+                </form>
+            </div>
+        </div>
+    <?php endif; ?>
 </body>
 </html>

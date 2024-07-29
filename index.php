@@ -31,6 +31,12 @@ if (isset($_SESSION['role_id'])) {
             document.getElementById('deleteModal').style.display = 'block';
         }
 
+        function openEditModal(threadId, threadName) {
+            document.getElementById('editThreadId').value = threadId;
+            document.getElementById('editThreadNameInput').value = threadName;
+            document.getElementById('editModal').style.display = 'block';
+        }
+
         function closeModal(sender) {
             if (sender != null) {
                 document.getElementById(sender).style.display = 'none';
@@ -44,8 +50,8 @@ if (isset($_SESSION['role_id'])) {
         <?php 
             if (isset($_SESSION['username'])): 
             echo htmlspecialchars($_SESSION['username']); 
-            endif; 
-        ?>!</h1> 
+            endif; ?>
+            !</h1> 
         <nav>
             <?php if (isset($_SESSION['username'])): ?>
                 <button onclick="openModal('threadModal')" class="button">Create new thread</button>
@@ -60,8 +66,7 @@ if (isset($_SESSION['role_id'])) {
         <h2>Threads</h2>
         <?php
         $threads = $conn->query("SELECT * FROM threadtable");
-        while ($thread = $threads->fetch_assoc()):
-        ?>
+        while ($thread = $threads->fetch_assoc()): ?>
             <div class="thread">
                 <div class="thread-title"><h3><a href="view_thread.php?thread_id=<?php echo $thread['ID']; ?>"><?php echo htmlspecialchars($thread['Name']); ?></a></h3></div>
                 <div class="thread-info">
@@ -70,15 +75,15 @@ if (isset($_SESSION['role_id'])) {
                 </div>
                 <?php if (isset($_SESSION['username'])): ?>
                 <div class="thread-action">
-                    <?php if ($userCanEdit): ?>
-                        <button class="icon-button" onclick="meineFunktion()">
-                            <img src="ressources\edit.png" alt="Icon Button">
+                <?php if ($userCanEdit): ?>
+                        <button class="icon-button" onclick="openEditModal(<?php echo $thread['ID']; ?>, '<?php echo htmlspecialchars(addslashes($thread['Name'])); ?>')">
+                            <img src="ressources/edit.png" alt="Edit Icon">
                         </button>
                     <?php endif; ?>
                     <?php if ($userCanDelete): ?>
-                    <button class="icon-button" onclick="openDeleteModal(<?php echo $thread['ID']; ?>, '<?php echo htmlspecialchars($thread['Name']); ?>')">
-                        <img src="ressources\trash.png" alt="Icon Button">
-                    </button>
+                        <button class="icon-button" onclick="openDeleteModal(<?php echo $thread['ID']; ?>, '<?php echo htmlspecialchars(addslashes($thread['Name'])); ?>')">
+                            <img src="ressources/trash.png" alt="Delete Icon">
+                        </button>
                     <?php endif; ?>
                 </div>
                 <?php endif; ?>
@@ -100,12 +105,28 @@ if (isset($_SESSION['role_id'])) {
             </div>
         </div>
 
+        <?php if ($userCanEdit) : ?>
+            <!-- Modal for edit thread -->
+            <div id="editModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('editModal')">&times;</span>
+                    <h2>Edit thread title</h2>
+                    <form action="edit_thread.php" method="post">
+                        <input type="hidden" id="editThreadId" name="thread_id">
+                        <label for="editThreadNameInput">Thread name:</label>
+                        <input type="text" id="editThreadNameInput" name="threadName" required>
+                        <button type="submit">Save</button>
+                    </form>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <?php if ($userCanDelete) : ?>
-            <!-- Modal for delete -->
+            <!-- Modal for delete thread-->
             <div id="deleteModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('deleteModal')">&times;</span>
-                <h2>Delete Thread</h2>
+                <h2>Delete thread</h2>
                 <div class="deleteInfo">You are about to delete the thread >><b id="deleteThreadName"></b><< Are you sure?</div>
                 <form action="delete_thread.php" method="post">
                     <input type="hidden" id="deleteThreadId" name="thread_id">

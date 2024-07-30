@@ -2,10 +2,12 @@
 session_start();
 include 'db.php';
 
-if (isset($_SESSION['role_id'])) {
-    $role_id = $_SESSION['role_id'];  
+$roleID = $_SESSION['role_id'];
+$userName = $_SESSION['username'];
+
+if (isset($roleID)) {
     $stmt = $conn->prepare("SELECT DeleteThread, RenameThread FROM roletable WHERE ID = ?");
-    $stmt->bind_param("i", $role_id);
+    $stmt->bind_param("i", $roleID);
     $stmt->execute();
     $stmt->bind_result($userCanDelete, $userCanEdit);
     $stmt->fetch();
@@ -48,15 +50,15 @@ if (isset($_SESSION['role_id'])) {
     <header>
         <h1>Welcome to my forum 
         <?php 
-            if (isset($_SESSION['username'])): 
-            echo htmlspecialchars($_SESSION['username']); 
+            if (isset($userName)): 
+            echo htmlspecialchars($userName); 
             endif; ?>
             !</h1> 
         <nav>
-            <?php if (isset($_SESSION['username'])): ?>
+            <?php if (isset($userName)): ?>
                 <button onclick="openModal('threadModal')" class="button">Create new thread</button>
                 <a href="account.php" class="button">My Account</a>
-                <a href="logout.php" class="button">Logout <?php if (isset($_SESSION['username'])): echo htmlspecialchars($_SESSION['username']); endif; ?></a>
+                <a href="logout.php" class="button">Logout <?php if (isset($userName)): echo htmlspecialchars($userName); endif; ?></a>
             <?php else: ?>
                 <button onclick="openModal('loginModal')" class="button">Login</button>
             <?php endif; ?>
@@ -66,32 +68,62 @@ if (isset($_SESSION['role_id'])) {
         <h2>Threads</h2>
         <?php
         $threads = $conn->query("SELECT * FROM threadtable");
-        while ($thread = $threads->fetch_assoc()): ?>
-            <div class="thread">
-                <div class="thread-title"><h3><a href="view_thread.php?thread_id=<?php echo $thread['ID']; ?>"><?php echo htmlspecialchars($thread['Name']); ?></a></h3></div>
-                <div class="thread-info">
-                    <div class="thread-createdBy">by <?php echo htmlspecialchars($thread['CreatedByUser']); ?></div>
-                    <div class="thread-createdDate">on <?php echo htmlspecialchars($thread['Date_Time']); ?></div>
-                </div>
-                <?php if (isset($_SESSION['username'])): ?>
-                <div class="thread-action">
+        while ($thread = $threads->fetch_assoc()): 
+            $threadID = $thread['ID'];
+            $threadName = $thread['Name'];
+            $amountOfMsg = null;
+            $timeOfLastMsg = null;
+            $userNameOfLastMsg = null;
+
+            $stmt = $conn->prepare("SELECT * FROM threadsummary WHERE Thread_ID = ?");
+            $stmt->bind_param("i", $threadID);
+            $stmt->execute();
+            $stmt->bind_result($threadID, $amountOfMsg, $timeOfLastMsg, $userNameOfLastMsg);
+            $stmt->fetch();
+            $stmt->close();?>
+
+                <div class="thread">
+                    <div class="thread-title">
+                        <a href="view_thread.php?thread_id=<?php echo $threadID; ?>" class="thread-link">
+                            <div class="thread-main-title">
+                                <?php echo htmlspecialchars($threadName); ?>
+                            </div>
+                            <div class="thread-sub-title">
+                                <?php if (!is_null($amountOfMsg)): ?>
+                                    <div><?php echo $amountOfMsg?> message posted</div>
+                                    <div class="thread-title-last-msg">
+                                        <div>Last post by <?php echo $userNameOfLastMsg?></div>
+                                        <div><?php echo $timeOfLastMsg?></div>
+                                    </div>
+                                <?php else: ?>
+                                    <div>0 message posted</div>
+                                <?php endif; ?>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="thread-info">
+                        <div class="thread-createdBy">by <?php echo htmlspecialchars($thread['CreatedByUser']); ?></div>
+                        <div class="thread-createdDate">on <?php echo htmlspecialchars($thread['Date_Time']); ?></div>
+                    </div>
+                <?php if (isset($userName)): ?>
+                    <div class="thread-action">
                 <?php if ($userCanEdit): ?>
-                        <button class="icon-button" onclick="openEditModal(<?php echo $thread['ID']; ?>, '<?php echo htmlspecialchars(addslashes($thread['Name'])); ?>')">
-                            <img src="ressources/edit.png" alt="Edit Icon">
-                        </button>
-                    <?php endif; ?>
-                    <?php if ($userCanDelete): ?>
-                        <button class="icon-button" onclick="openDeleteModal(<?php echo $thread['ID']; ?>, '<?php echo htmlspecialchars(addslashes($thread['Name'])); ?>')">
-                            <img src="ressources/trash.png" alt="Delete Icon">
-                        </button>
-                    <?php endif; ?>
+                    <button class="icon-button" onclick="openEditModal(<?php echo $threadID; ?>, '<?php echo htmlspecialchars(addslashes($threadName)); ?>')">
+                        <img src="ressources/edit.png" alt="Edit Icon">
+                    </button>
+                <?php endif; ?>
+                <?php if ($userCanDelete): ?>
+                    <button class="icon-button" onclick="openDeleteModal(<?php echo $threadID; ?>, '<?php echo htmlspecialchars(addslashes($threadName)); ?>')">
+                        <img src="ressources/trash.png" alt="Delete Icon">
+                    </button>
+                <?php endif; ?>
                 </div>
                 <?php endif; ?>
             </div>
         <?php endwhile; ?>
     </main>
 
-    <?php if (isset($_SESSION['username'])): ?>
+    <?php if (isset($userName)): ?>
         <!-- Modal für neuen Thread -->
         <div id="threadModal" class="modal">
             <div class="modal-content">

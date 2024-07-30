@@ -47,22 +47,33 @@ main {
     justify-content: space-between;
 }
 
-.thread h3 {
+.thread-title {
     margin-top: 0;
+    margin-right: auto;
 }
 
-.thread h3 > a:link, .thread h3 > a:visited {
+.thread-main-title {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.thread-sub-title {
+    font-size: 14px;
+}
+
+.thread-title-last-msg {
+    margin-top: 5px;
+    font-size: 10px;
+}
+
+.thread-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.thread-link:link, .thread-link:visited {
     color: #555555;
     text-decoration: none;
-}
-
-.thread h3 > a:hover{
-    color: #202020;
-    text-decoration: underline;
-}
-
-.thread-title {
-    margin-right: auto;
 }
 
 .thread-info {

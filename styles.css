@@ -47,9 +47,14 @@ main {
     justify-content: space-between;
 }
 
+.thread:hover {
+    box-shadow: 5px 5px 5px #555555;
+}
+
 .thread-title {
     margin-top: 0;
     margin-right: auto;
+    width: 80%;
 }
 
 .thread-main-title {
@@ -66,11 +71,6 @@ main {
     font-size: 10px;
 }
 
-.thread-link {
-    text-decoration: none;
-    color: inherit;
-}
-
 .thread-link:link, .thread-link:visited {
     color: #555555;
     text-decoration: none;
@@ -79,6 +79,7 @@ main {
 .thread-info {
     display: flex;
     flex-direction: column;
+    cursor: default;
 }
 
 .thread-info div {
@@ -86,7 +87,62 @@ main {
     margin-left: 10px;
 }
 
+.thread-action > button{
+    margin-left: 10px;
+    display: block;
+}
 
+.icon-button {
+    border: none;
+    background: none;
+    padding: 5px;
+    cursor: pointer;
+}
+
+.icon-button-settings {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+
+}
+
+.icon-button-tooltip {
+    display: none;
+    position: absolute;
+    color: white;
+    padding: 5px;
+    font-size: 14px;
+    white-space: nowrap;
+    z-index: 1;
+    background-color: #555;
+}
+
+.icon-button-settings:hover .icon-button-settings-tooltip {
+    display: block;
+}
+
+.icon-button-settings-tooltip {
+    right: 30px;
+    top: 5px;  
+}
+
+.icon-button-thread:hover .icon-button-thread-tooltip {
+    display: block;
+}
+
+.icon-button-thread-tooltip {
+    transform: translateX(-80px);
+}
+
+
+.icon-button img {
+    width: 24px; /* Beispielbreite, kann angepasst werden */
+    height: 24px; /* Beispielhöhe, kann angepasst werden */
+}
+
+.deleteInfo {
+    margin-bottom: 20px;
+}
 
 /* Modal */
 .modal {
@@ -187,18 +243,107 @@ form button {
     background-color: #0056b3;
 }
 
-.icon-button {
-    border: none;
-    background: none;
-    padding: 0;
+.form-account {
+    flex-direction: row;
+}
+
+.success-message {
+    color: green;
+}
+.error-message {
+    color: red;
+}
+
+.form-pic {
+    width: 40%;
+    display: grid;
+    align-content: space-between;
+    justify-items: center;
+}
+
+.form-data {
+    width: 60%;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-pic-upload {
+    display: grid;
+    justify-content: start;
+}
+
+.form-pic-upload-info {
+    padding: 0px;
+    margin-top: 0;
+    font-size: 12px;
+}
+
+.form-pic-frame > img {
+    max-width: 300px;
+    max-height: 300px;
+}
+
+.file-input-container {
+    position: relative;
+    display: inline-block;
+    width: 200px;
+}
+
+.file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
     cursor: pointer;
 }
 
-.icon-button img {
-    width: 24px; /* Beispielbreite, kann angepasst werden */
-    height: 24px; /* Beispielhöhe, kann angepasst werden */
+.file-input-label {
+    display: inline-block;
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
 }
 
-.deleteInfo {
+.file-input-label:hover {
+    background-color: #0056b3;
+}
+
+.file-name {
+    margin-top: 10px;
+    margin-bottom: 0px;
+    font-style: italic;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
     margin-bottom: 20px;
+}
+th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+th {
+    background-color: #f4f4f4;
+}
+select {
+    width: 100%;
+}
+.admin-tables {
+    margin-bottom: 20px;
+}
+.admin-tables th, .admin-tables td {
+    text-align: left;
+}
+.permissions-table input[type="checkbox"] {
+    margin-right: 10px;
+}
+.admin-tables button {
+    margin-top: 10px;
 }

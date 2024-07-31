@@ -77,10 +77,12 @@ $msg_stmt->bind_result($msg_user_name, $msg_date_time, $msg_content);
 <body>
     <header>
         <h1><?php echo htmlspecialchars($thread_name); ?></h1>
+        <?php if (isset($_SESSION['username'])): ?>
+        <a href="account.php" class="icon-button icon-button-settings"><img src="ressources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
+        <?php endif; ?>
         <nav>
             <a href="index.php" class="button">Back to overview</a>
             <?php if (isset($_SESSION['username'])): ?>
-                <a href="account.php" class="button">My Account</a>
                 <a href="logout.php" class="button">Logout <?php if (isset($_SESSION['username'])): echo htmlspecialchars($_SESSION['username']); endif; ?></a>
             <?php else: ?>
                 <button onclick="openModal('loginModal')" class="button">Login</button>

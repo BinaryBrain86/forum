@@ -2,14 +2,16 @@
 session_start();
 include 'db.php';
 
-$roleID = $_SESSION['role_id'];
-$userName = $_SESSION['username'];
+if (isset($_SESSION['username'])):
+    $roleID = $_SESSION['role_id'];
+    $userName = $_SESSION['username'];
+endif;
 
 if (isset($roleID)) {
-    $stmt = $conn->prepare("SELECT DeleteThread, RenameThread FROM roletable WHERE ID = ?");
+    $stmt = $conn->prepare("SELECT Name, DeleteThread, RenameThread FROM roletable WHERE ID = ?");
     $stmt->bind_param("i", $roleID);
     $stmt->execute();
-    $stmt->bind_result($userCanDelete, $userCanEdit);
+    $stmt->bind_result($roleName, $userCanDelete, $userCanEdit);
     $stmt->fetch();
     $stmt->close();
 }?>
@@ -43,21 +45,26 @@ if (isset($roleID)) {
             if (sender != null) {
                 document.getElementById(sender).style.display = 'none';
             }
+
+
         }
     </script>
 </head>
 <body>
     <header>
         <h1>Welcome to my forum 
-        <?php 
-            if (isset($userName)): 
+        <?php if (isset($userName)): 
             echo htmlspecialchars($userName); 
-            endif; ?>
-            !</h1> 
+        endif; ?> !</h1> 
+        <?php if (isset($userName)): ?>
+        <a href="account.php" class="icon-button icon-button-settings"><img src="ressources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
+        <?php endif; ?>
         <nav>
             <?php if (isset($userName)): ?>
                 <button onclick="openModal('threadModal')" class="button">Create new thread</button>
-                <a href="account.php" class="button">My Account</a>
+                <?php if ($roleName == "Admin"): ?>
+                    <a href="admin.php" class="button">Administration</a>
+                <?php endif; ?>
                 <a href="logout.php" class="button">Logout <?php if (isset($userName)): echo htmlspecialchars($userName); endif; ?></a>
             <?php else: ?>
                 <button onclick="openModal('loginModal')" class="button">Login</button>
@@ -108,13 +115,15 @@ if (isset($roleID)) {
                 <?php if (isset($userName)): ?>
                     <div class="thread-action">
                 <?php if ($userCanEdit): ?>
-                    <button class="icon-button" onclick="openEditModal(<?php echo $threadID; ?>, '<?php echo htmlspecialchars(addslashes($threadName)); ?>')">
+                    <button class="icon-button icon-button-thread" onclick="openEditModal(<?php echo $threadID; ?>, '<?php echo htmlspecialchars(addslashes($threadName)); ?>')">
                         <img src="ressources/edit.png" alt="Edit Icon">
+                        <div class="icon-button-thread-tooltip icon-button-tooltip">Edit thread</div>
                     </button>
                 <?php endif; ?>
                 <?php if ($userCanDelete): ?>
-                    <button class="icon-button" onclick="openDeleteModal(<?php echo $threadID; ?>, '<?php echo htmlspecialchars(addslashes($threadName)); ?>')">
+                    <button class="icon-button icon-button-thread" onclick="openDeleteModal(<?php echo $threadID; ?>, '<?php echo htmlspecialchars(addslashes($threadName)); ?>')">
                         <img src="ressources/trash.png" alt="Delete Icon">
+                        <div class="icon-button-thread-tooltip icon-button-tooltip">Delete thread</div>
                     </button>
                 <?php endif; ?>
                 </div>

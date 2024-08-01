@@ -7,6 +7,11 @@ if (!isset($_GET['thread_id'])) {
     exit();
 }
 
+$user_id = null;
+if (isset($_SESSION['user_id'])) {
+    $user_id = $_SESSION['user_id'];
+}
+
 $thread_id = $_GET['thread_id'];
 
 // Fetch thread details
@@ -33,10 +38,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])) {
 }
 
 // Fetch messages in the thread
-$msg_stmt = $conn->prepare("SELECT UserName, Date_Time, Message FROM messagetable WHERE Thread_ID = ? ORDER BY Date_Time ASC");
+$msg_stmt = $conn->prepare("SELECT User_ID, UserName, Date_Time, Message FROM messagetable WHERE Thread_ID = ? ORDER BY Date_Time ASC");
 $msg_stmt->bind_param("i", $thread_id);
 $msg_stmt->execute();
-$msg_stmt->bind_result($msg_user_name, $msg_date_time, $msg_content);
+$msg_stmt->bind_result($msg_user_id, $msg_user_name, $msg_date_time, $msg_content);
+
+// Store messages in an array
+$messages = [];
+while ($msg_stmt->fetch()) {
+    $messages[] = [
+        'user_id' => $msg_user_id,
+        'user_name' => $msg_user_name,
+        'date_time' => $msg_date_time,
+        'content' => $msg_content
+    ];
+}
+$msg_stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -68,10 +85,10 @@ $msg_stmt->bind_result($msg_user_name, $msg_date_time, $msg_content);
         }
 
         function submitForm() {
-                    const message = document.querySelector('input[name=message]');
-                    message.value = quill.root.innerHTML;
-                    return true;
-                }   
+            const message = document.querySelector('input[name=message]');
+            message.value = quill.root.innerHTML;
+            return true;
+        }   
     </script>
 </head>
 <body>
@@ -91,13 +108,40 @@ $msg_stmt->bind_result($msg_user_name, $msg_date_time, $msg_content);
     </header>
     <main>
         <div class="messages">
-            <?php while ($msg_stmt->fetch()): ?>
+            <?php foreach ($messages as $msg): 
+                // Fetch current user information
+                $userPic = null;
+                if ($msg['user_id']) {
+                    $stmt = $conn->prepare("SELECT Pic FROM usertable WHERE ID = ?");
+                    $stmt->bind_param("i", $msg['user_id']);
+                    $stmt->execute();
+                    $stmt->bind_result($userPic);
+                    $stmt->fetch();
+                    $stmt->close();
+                }?>
                 <div class="message">
-                    <p><strong><?php echo htmlspecialchars($msg_user_name); ?></strong> <em><?php echo $msg_date_time; ?></em></p>
-                    <p><?php echo nl2br(($msg_content)); ?></p>
+                    <div class="message-info">
+                        <?php
+                            if ($msg['user_id'] == $user_id):
+                                echo "<a href=\"account.php\">";
+                            endif;       
+                            if ($userPic):
+                                echo "<img src=\"data:image/jpeg;base64,"; echo base64_encode($userPic); echo"\" alt=\"Profile Picture\">";
+                            else:
+                                echo "<img src=\"ressources\\frame.png\">";
+                            endif;  
+                            if ($msg['user_id'] == $user_id):
+                                echo "</a>";
+                            endif; 
+                        ?>  
+                        <div class="message-info-name"><?php echo htmlspecialchars($msg['user_name']); ?></div>
+                        <div class="message-info-date"><?php echo $msg['date_time']; ?></div>
+                    </div>
+                    <div class="message-content">
+                        <?php echo nl2br(($msg['content'])); ?>
+                    </div>               
                 </div>
-            <?php endwhile; ?>
-            <?php $msg_stmt->close(); ?>
+            <?php endforeach; ?>
         </div>
         <?php if (isset($_SESSION['username'])): ?>
             <div class="new-message">

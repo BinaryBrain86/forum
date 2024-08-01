@@ -10,6 +10,9 @@ header {
     color: #fff;
     padding: 10px 0;
     text-align: center;
+    position: fixed;
+    top: 0;
+    width: 100%
 }
 
 nav {
@@ -35,6 +38,7 @@ nav .button:hover {
 
 main {
     padding: 20px;
+    padding-top: 150px;
 }
 
 .thread {
@@ -193,8 +197,6 @@ form button {
     font-size: 16px;
 }
 
-
-
 .messages {
     background-color: #fff;
     padding: 20px;
@@ -205,8 +207,40 @@ form button {
 
 .message {
     border-bottom: 1px solid #ccc;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    display: flex;
+}
+
+.message-info {
+    min-width: 150px;
+}
+
+.message-info img {
+    max-height: 60px;
+    max-width: 60px;
+}
+
+.message-info-date {
+    font-size: 12px;
+    margin-bottom: 20px;
+}
+
+.message-info-name{
+    margin-top: 10px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.message-content {
+    padding: 10px;
+    width: 100%;
+    border: 1px solid #dddddd;
+    border-radius: 5px;
+}
+
+.message-content *:first-child{
+    margin-top: 5px;
 }
 
 .message:last-child {
@@ -241,6 +275,14 @@ form button {
 
 .new-message form button:hover, form button:hover {
     background-color: #0056b3;
+}
+
+.ql-size-large{
+    font-size: larger
+}
+
+.ql-size-huge {
+    font-size: xx-large;
 }
 
 .form-account {

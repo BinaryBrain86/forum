@@ -35,6 +35,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['role_permissions'])) {
     }
 }
 
+// Verarbeiten der Benutzerlöschung
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_user_id'])) {
+    $delete_user_id = $_POST['delete_user_id'];
+    $stmt = $conn->prepare("DELETE FROM usertable WHERE ID = ?");
+    $stmt->bind_param("i", $delete_user_id);
+    $stmt->execute();
+}
+
 // Alle Benutzer abrufen
 $result = $conn->query("SELECT ID, UserName, Name, FirstName, EMail, Role_ID FROM usertable");
 $users = $result->fetch_all(MYSQLI_ASSOC);
@@ -50,6 +58,18 @@ $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
     <meta charset="UTF-8">
     <title>Administration Dashboard</title>
     <link rel="stylesheet" href="styles.css">
+    <script>
+        function openDeleteModal(userId, userName) {
+            document.getElementById('deleteModal').style.display = 'block';
+            document.getElementById('deleteUserId').value = userId;
+            document.getElementById('deleteUserName').innerText = userName;
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+    </script>
+
 </head>
 <body>
     <header>
@@ -100,6 +120,7 @@ $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
                         <th>First Name</th>
                         <th>Email</th>
                         <th>Role</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -110,11 +131,16 @@ $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
                         <td><?php echo htmlspecialchars($user['FirstName']); ?></td>
                         <td><?php echo htmlspecialchars($user['EMail']); ?></td>
                         <td>
-                            <select name="user_roles[<?php echo $user['ID']; ?>]">
-                                <option value="1" <?php echo $user['Role_ID'] == 1 ? 'selected' : ''; ?>>Admin</option>
-                                <option value="2" <?php echo $user['Role_ID'] == 2 ? 'selected' : ''; ?>>Moderator</option>
-                                <option value="3" <?php echo $user['Role_ID'] == 3 ? 'selected' : ''; ?>>User</option>
-                            </select>
+                            <div class="styled-select">
+                                <select name="user_roles[<?php echo $user['ID']; ?>]">
+                                    <option value="1" <?php echo $user['Role_ID'] == 1 ? 'selected' : ''; ?>>Admin</option>
+                                    <option value="2" <?php echo $user['Role_ID'] == 2 ? 'selected' : ''; ?>>Moderator</option>
+                                    <option value="3" <?php echo $user['Role_ID'] == 3 ? 'selected' : ''; ?>>User</option>
+                                </select>
+                            </div>
+                        </td>
+                        <td>
+                            <button type="button" onclick="openDeleteModal(<?php echo $user['ID']; ?>, '<?php echo htmlspecialchars($user['UserName']); ?>')">Delete</button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -123,5 +149,19 @@ $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
             <button type="submit">Save User Roles</button>
         </form>
     </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeDeleteModal()">&times;</span>
+            <h2>Confirm Deletion</h2>
+            <p>Are you sure you want to delete user <strong id="deleteUserName"></strong>?</p>
+            <form method="post" action="admin.php">
+                <input type="hidden" name="delete_user_id" id="deleteUserId">
+                <button type="submit">Delete</button>
+                <button type="button" onclick="closeDeleteModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>

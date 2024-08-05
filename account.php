@@ -20,17 +20,12 @@ if ($userName && ($_SERVER["REQUEST_METHOD"] == "POST")) {
 
     // Update with or without picture
     if ($picture) {
-        $stmt = $conn->prepare("UPDATE usertable SET Name = ?, FirstName = ?, EMail = ?, Pic = ? WHERE ID = ?");
-        $stmt->bind_param("ssssi", $name, $firstname, $email, $picture, $user_id);
+        $stmt = $conn->prepare("UPDATE usertable SET Name = ?, FirstName = ?, EMail = ?, Pic = ?, PW_Hash = ? WHERE ID = ?");
+        $stmt->bind_param("sssssi", $name, $firstname, $email, $picture, $password, $user_id);
     } else {
-        $stmt = $conn->prepare("UPDATE usertable SET Name = ?, FirstName = ?, EMail = ? WHERE ID = ?");
-        $stmt->bind_param("sssi", $name, $firstname, $email, $user_id);
+        $stmt = $conn->prepare("UPDATE usertable SET Name = ?, FirstName = ?, EMail = ?, PW_Hash = ? WHERE ID = ?");
+        $stmt->bind_param("ssssi", $name, $firstname, $email, $password, $user_id);
     }
-    $stmt->execute();
-
-
-    $stmt = $conn->prepare("UPDATE passwordtable SET PW_Hash = ? WHERE ID = (SELECT PW_ID FROM usertable WHERE ID = ?)");
-    $stmt->bind_param("si", $password, $user_id);
     $stmt->execute();
 
     $updateSuccess = true;

@@ -168,7 +168,7 @@ if (isset($roleID)) {
             <div class="modal-content">
                 <span class="close" onclick="closeModal('deleteModal')">&times;</span>
                 <h2>Delete thread</h2>
-                <div class="deleteInfo">You are about to delete the thread >><b id="deleteThreadName"></b><< Are you sure?</div>
+                <div class="deleteInfo">You are about to delete the thread >> <b id="deleteThreadName"></b> << Are you sure?</div>
                 <form action="delete_thread.php" method="post">
                     <input type="hidden" id="deleteThreadId" name="thread_id">
                     <button type="submit" class="button">Yes</button>

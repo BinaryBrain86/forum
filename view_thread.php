@@ -7,12 +7,35 @@ if (!isset($_GET['thread_id'])) {
     exit();
 }
 
-$user_id = null;
-if (isset($_SESSION['user_id'])) {
-    $user_id = $_SESSION['user_id'];
+$userID = null;
+if (isset($_SESSION['username'])):
+    $userID = $_SESSION['user_id'];
+    $roleID = $_SESSION['role_id'];
+    $userName = $_SESSION['username'];
+endif;
+
+$userCanDeleteMessages = false;
+if (isset($roleID)) {
+    $stmt = $conn->prepare("SELECT DeleteMessages FROM roletable WHERE ID = ?");
+    $stmt->bind_param("i", $roleID);
+    $stmt->execute();
+    $stmt->bind_result($userCanDeleteMessages);
+    $stmt->fetch();
+    $stmt->close();
 }
 
 $thread_id = $_GET['thread_id'];
+
+
+if ($userCanDeleteMessages && ($_SERVER["REQUEST_METHOD"] == "POST") && isset($_POST['msg_id'])) {
+    $msg_id = $_POST['msg_id'];
+    $delete_stmt = $conn->prepare("DELETE FROM messagetable WHERE ID = ?");
+    $delete_stmt->bind_param("i", $msg_id);
+    $delete_stmt->execute();
+    $delete_stmt->close();
+    header("Location: view_thread.php?thread_id=" . $thread_id);
+    exit();
+}
 
 // Fetch thread details
 $thread_stmt = $conn->prepare("SELECT Name FROM threadtable WHERE ID = ?");
@@ -23,13 +46,11 @@ $thread_stmt->fetch();
 $thread_stmt->close();
 
 // Handle new message submission
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])  && isset($_POST['message'])) {
     $message = $_POST['message'];
-    $user_id = $_SESSION['user_id'];
-    $user_name = $_SESSION['username'];
 
     $stmt = $conn->prepare("INSERT INTO messagetable (User_ID, UserName, Thread_ID, Message) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("isis", $user_id, $user_name, $thread_id, $message);
+    $stmt->bind_param("isis", $userID, $userName, $thread_id, $message);
     $stmt->execute();
     $stmt->close();
 
@@ -38,15 +59,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])) {
 }
 
 // Fetch messages in the thread
-$msg_stmt = $conn->prepare("SELECT User_ID, UserName, Date_Time, Message FROM messagetable WHERE Thread_ID = ? ORDER BY Date_Time ASC");
+$msg_stmt = $conn->prepare("SELECT ID, User_ID, UserName, Date_Time, Message FROM messagetable WHERE Thread_ID = ? ORDER BY Date_Time ASC");
 $msg_stmt->bind_param("i", $thread_id);
 $msg_stmt->execute();
-$msg_stmt->bind_result($msg_user_id, $msg_user_name, $msg_date_time, $msg_content);
+$msg_stmt->bind_result($msg_id, $msg_user_id, $msg_user_name, $msg_date_time, $msg_content);
 
 // Store messages in an array
 $messages = [];
 while ($msg_stmt->fetch()) {
     $messages[] = [
+        'id' => $msg_id,
         'user_id' => $msg_user_id,
         'user_name' => $msg_user_name,
         'date_time' => $msg_date_time,
@@ -89,6 +111,18 @@ $msg_stmt->close();
             message.value = quill.root.innerHTML;
             return true;
         }   
+
+        function openDeleteModal(mgsId, userOfMessage) {
+            document.getElementById('deleteMsgId').value = mgsId;
+            document.getElementById('userOfMessage').innerText = userOfMessage;
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+
+        function closeModal(sender) {
+            if (sender != null) {
+                document.getElementById(sender).style.display = 'none';
+            }
+        }
     </script>
 </head>
 <body>
@@ -109,20 +143,33 @@ $msg_stmt->close();
     <main>
         <div class="messages">
             <?php foreach ($messages as $msg): 
+
                 // Fetch current user information
                 $userPic = null;
-                if ($msg['user_id']) {
+                $userExists = false;
+                 // Check if the username was deleted
+                $stmt = $conn->prepare("SELECT COUNT(*) FROM usertable WHERE ID = ?");
+                $stmt->bind_param("i", $msg['user_id']);
+                $stmt->execute();
+                $stmt->bind_result($count);
+                $stmt->fetch();
+                $stmt->close();
+
+                if ($count > 0) {
+                    $userExists = true;
+
                     $stmt = $conn->prepare("SELECT Pic FROM usertable WHERE ID = ?");
                     $stmt->bind_param("i", $msg['user_id']);
                     $stmt->execute();
                     $stmt->bind_result($userPic);
                     $stmt->fetch();
-                    $stmt->close();
-                }?>
+                    $stmt->close();     
+                }
+                ?>
                 <div class="message">
                     <div class="message-info">
                         <?php
-                            if ($msg['user_id'] == $user_id):
+                            if ($msg['user_id'] == $userID):
                                 echo "<a href=\"account.php\">";
                             endif;       
                             if ($userPic):
@@ -130,16 +177,27 @@ $msg_stmt->close();
                             else:
                                 echo "<img src=\"ressources\\frame.png\">";
                             endif;  
-                            if ($msg['user_id'] == $user_id):
+                            if ($msg['user_id'] == $userID):
                                 echo "</a>";
                             endif; 
                         ?>  
                         <div class="message-info-name"><?php echo htmlspecialchars($msg['user_name']); ?></div>
                         <div class="message-info-date"><?php echo $msg['date_time']; ?></div>
+                        <?php if ($userExists == false): ?>
+                            <div class="message-info-userDeleted">User deleted</div>
+                        <?php endif; ?>  
                     </div>
                     <div class="message-content">
                         <?php echo nl2br(($msg['content'])); ?>
-                    </div>               
+                    </div>
+                    <?php if ($userCanDeleteMessages): ?>
+                    <div>
+                        <button class="icon-button icon-button-thread" onclick="openDeleteModal(<?php echo $msg['id']; ?>, '<?php echo htmlspecialchars(addslashes($msg['user_name'])); ?>')">
+                            <img src="ressources/trash.png" alt="Delete Icon">
+                            <div class="icon-button-thread-tooltip icon-button-tooltip">Delete message</div>
+                        </button>
+                    </div>  
+                    <?php endif; ?>              
                 </div>
             <?php endforeach; ?>
         </div>
@@ -213,9 +271,24 @@ $msg_stmt->close();
             <p><button onclick="openModal('loginModal')" class="button">Login</button>, to write a message.</p>
         <?php endif; ?>
     </main>
-    <?php if (isset($_SESSION['username']) == null): ?>
-         <!-- Modal für neuen Thread -->
-         <div id="loginModal" class="modal">
+    <?php if (isset($_SESSION['username'])): ?>
+        <?php if ($userCanDeleteMessages) : ?>
+            <!-- Modal for delete thread-->
+            <div id="deleteModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('deleteModal')">&times;</span>
+                <h2>Delete message</h2>
+                <div class="deleteInfo">You are about to delete the message from user >> <b id="userOfMessage"></b> << Are you sure?</div>
+                <form action="view_thread.php?thread_id=<?php echo $thread_id; ?>" method="post">
+                    <input type="hidden" id="deleteMsgId" name="msg_id">
+                    <button type="submit" class="button">Yes</button>
+                    <button type="button" class="button" onclick="closeModal('deleteModal')">No</button>
+                </form>
+            </div>
+        <?php endif; ?>
+    <?php else: ?>
+        <!-- Modal für neuen Thread -->
+        <div id="loginModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('loginModal')">&times;</span>
                 <h2>Login</h2>

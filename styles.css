@@ -226,9 +226,15 @@ form button {
     margin-bottom: 20px;
 }
 
-.message-info-name{
+.message-info-name {
     margin-top: 10px;
     font-size: 18px;
+    font-weight: bold;
+}
+
+.message-info-userDeleted {
+    font-style: italic;
+    font-size: 10px;
     font-weight: bold;
 }
 

@@ -26,16 +26,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Hash the password
         $passwordHash = password_hash($password, PASSWORD_BCRYPT);
 
-        // Insert into the passwordtable
-        $stmt = $conn->prepare("INSERT INTO passwordtable (PW_Hash) VALUES (?)");
-        $stmt->bind_param("s", $passwordHash);
-        $stmt->execute();
-        $pw_id = $stmt->insert_id;
-        $stmt->close();
-
         // Insert into the usertable
-        $stmt = $conn->prepare("INSERT INTO usertable (UserName, Name, FirstName, EMail, PW_ID, Role_ID) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssii", $username, $name, $firstname, $email, $pw_id, $role_id);
+        $stmt = $conn->prepare("INSERT INTO usertable (UserName, Name, FirstName, EMail, Role_ID, PW_Hash) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssis", $username, $name, $firstname, $email, $role_id, $passwordHash);
         $stmt->execute();
         $stmt->close();
 

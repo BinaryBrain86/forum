@@ -6,7 +6,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT usertable.ID, usertable.UserName, usertable.Role_ID, passwordtable.PW_Hash FROM usertable JOIN passwordtable ON usertable.PW_ID = passwordtable.ID WHERE usertable.UserName = ?");
+    $stmt = $conn->prepare("SELECT ID, UserName, Role_ID, PW_Hash FROM usertable WHERE UserName = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $stmt->bind_result($user_id, $user_name, $role_id, $pw_hash);

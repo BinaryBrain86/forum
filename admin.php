@@ -74,11 +74,15 @@ $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
 <body>
     <header>
         <h1>Administration Dashboard</h1>
-        <a href="account.php" class="icon-button icon-button-settings"><img src="ressources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
-        <nav>
-            <a href="index.php" class="button">Back to overview</a>
-            <a href="logout.php" class="button">Logout <?php echo htmlspecialchars($_SESSION['username']); ?></a>
-        </nav>
+        <a href="account.php" class="icon-button icon-button-settings"><img src="resources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
+        <div class="header-content">
+            <div class="header-left">
+            </div>
+            <div class="header-right">
+                <a href="index.php" class="button">Back to overview</a>
+                <a href="logout.php" class="button">Logout <?php echo htmlspecialchars($_SESSION['username']); ?></a>
+            </div>
+        </div>
     </header>
     <main>
         <!-- Role Settings -->

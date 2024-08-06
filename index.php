@@ -55,11 +55,18 @@ if (isset($roleID)) {
         <h1>Welcome to my forum 
         <?php if (isset($userName)): 
             echo htmlspecialchars($userName); 
-        endif; ?> !</h1> 
+        endif; ?> !</h1>
         <?php if (isset($userName)): ?>
-        <a href="account.php" class="icon-button icon-button-settings"><img src="ressources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
+        <a href="account.php" class="icon-button icon-button-settings"><img src="resources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
         <?php endif; ?>
-        <nav>
+        <div class="header-content">
+            <div class="header-left">
+                <form method="get" action="search_results.php" class="search-form">
+                    <input type="text" name="search_query" placeholder="Search" required>
+                    <button type="submit">Go</button>
+                </form>
+            </div>
+            <div class="header-right">
             <?php if (isset($userName)): ?>
                 <button onclick="openModal('threadModal')" class="button">Create new thread</button>
                 <?php if ($roleName == "Admin"): ?>
@@ -69,7 +76,8 @@ if (isset($roleID)) {
             <?php else: ?>
                 <button onclick="openModal('loginModal')" class="button">Login</button>
             <?php endif; ?>
-        </nav>
+            </div>
+        </div>
     </header>
     <main>
         <h2>Threads</h2>
@@ -116,17 +124,17 @@ if (isset($roleID)) {
                     <div class="thread-action">
                 <?php if ($userCanEdit): ?>
                     <button class="icon-button icon-button-thread" onclick="openEditModal(<?php echo $threadID; ?>, '<?php echo htmlspecialchars(addslashes($threadName)); ?>')">
-                        <img src="ressources/edit.png" alt="Edit Icon">
+                        <img src="resources/edit.png" alt="Edit Icon">
                         <div class="icon-button-thread-tooltip icon-button-tooltip">Edit thread</div>
                     </button>
                 <?php endif; ?>
                 <?php if ($userCanDelete): ?>
                     <button class="icon-button icon-button-thread" onclick="openDeleteModal(<?php echo $threadID; ?>, '<?php echo htmlspecialchars(addslashes($threadName)); ?>')">
-                        <img src="ressources/trash.png" alt="Delete Icon">
+                        <img src="resources/trash.png" alt="Delete Icon">
                         <div class="icon-button-thread-tooltip icon-button-tooltip">Delete thread</div>
                     </button>
                 <?php endif; ?>
-                </div>
+                    </div>
                 <?php endif; ?>
             </div>
         <?php endwhile; ?>

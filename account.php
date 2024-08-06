@@ -82,14 +82,18 @@ if ($userName) {
 <body>
 <header>
         <h1>My Account</h1>
-        <nav>
-            <a href="index.php" class="button">Back to overview</a>
-            <?php if (isset($userName)): ?>
-                <a href="logout.php" class="button">Logout <?php if (isset($userName)): echo htmlspecialchars($userName); endif; ?></a>
-            <?php else: ?>
-                <button onclick="openModal('loginModal')" class="button">Login</button>
-            <?php endif; ?>
-        </nav>
+        <div class="header-content">
+            <div class="header-left">
+            </div>
+            <div class="header-right">
+                <a href="index.php" class="button">Back to overview</a>
+                <?php if (isset($userName)): ?>
+                    <a href="logout.php" class="button">Logout <?php if (isset($userName)): echo htmlspecialchars($userName); endif; ?></a>
+                <?php else: ?>
+                    <button onclick="openModal('loginModal')" class="button">Login</button>
+                <?php endif; ?>
+            </div>
+        </div>
     </header>
     <main>
         <?php if ($updateSuccess): ?>
@@ -111,7 +115,7 @@ if ($userName) {
                         <?php if ($userData['Pic']): ?>
                             <img src="data:image/jpeg;base64,<?php echo base64_encode($userData['Pic']); ?>" alt="Profile Picture" class="profile-pic">
                         <?php else: ?>
-                            <img src="ressources\frame.png">
+                            <img src="resources\frame.png">
                         <?php endif; ?>    
                     </div>
                     <div class="form-pic-upload">

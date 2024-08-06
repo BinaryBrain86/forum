@@ -26,7 +26,7 @@ if (isset($roleID)) {
 
 $thread_id = $_GET['thread_id'];
 
-
+// Handle delete message
 if ($userCanDeleteMessages && ($_SERVER["REQUEST_METHOD"] == "POST") && isset($_POST['msg_id'])) {
     $msg_id = $_POST['msg_id'];
     $delete_stmt = $conn->prepare("DELETE FROM messagetable WHERE ID = ?");
@@ -36,14 +36,6 @@ if ($userCanDeleteMessages && ($_SERVER["REQUEST_METHOD"] == "POST") && isset($_
     header("Location: view_thread.php?thread_id=" . $thread_id);
     exit();
 }
-
-// Fetch thread details
-$thread_stmt = $conn->prepare("SELECT Name FROM threadtable WHERE ID = ?");
-$thread_stmt->bind_param("i", $thread_id);
-$thread_stmt->execute();
-$thread_stmt->bind_result($thread_name);
-$thread_stmt->fetch();
-$thread_stmt->close();
 
 // Handle new message submission
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])  && isset($_POST['message'])) {
@@ -57,6 +49,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])  && isse
     header("Location: view_thread.php?thread_id=$thread_id");
     exit();
 }
+
+// Fetch thread details
+$thread_stmt = $conn->prepare("SELECT Name FROM threadtable WHERE ID = ?");
+$thread_stmt->bind_param("i", $thread_id);
+$thread_stmt->execute();
+$thread_stmt->bind_result($thread_name);
+$thread_stmt->fetch();
+$thread_stmt->close();
 
 // Fetch messages in the thread
 $msg_stmt = $conn->prepare("SELECT ID, User_ID, UserName, Date_Time, Message FROM messagetable WHERE Thread_ID = ? ORDER BY Date_Time ASC");
@@ -129,16 +129,24 @@ $msg_stmt->close();
     <header>
         <h1><?php echo htmlspecialchars($thread_name); ?></h1>
         <?php if (isset($_SESSION['username'])): ?>
-        <a href="account.php" class="icon-button icon-button-settings"><img src="ressources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
+        <a href="account.php" class="icon-button icon-button-settings"><img src="resources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
         <?php endif; ?>
-        <nav>
-            <a href="index.php" class="button">Back to overview</a>
-            <?php if (isset($_SESSION['username'])): ?>
-                <a href="logout.php" class="button">Logout <?php if (isset($_SESSION['username'])): echo htmlspecialchars($_SESSION['username']); endif; ?></a>
-            <?php else: ?>
-                <button onclick="openModal('loginModal')" class="button">Login</button>
-            <?php endif; ?>
-        </nav>
+        <div class="header-content">
+            <div class="header-left">
+            <form method="get" action="search_results.php" class="search-form">
+                    <input type="text" name="search_query" placeholder="Search" required>
+                    <button type="submit">Go</button>
+                </form>
+            </div>
+            <div class="header-right">
+                <a href="index.php" class="button">Back to overview</a>
+                <?php if (isset($_SESSION['username'])): ?>
+                    <a href="logout.php" class="button">Logout <?php if (isset($_SESSION['username'])): echo htmlspecialchars($_SESSION['username']); endif; ?></a>
+                <?php else: ?>
+                    <button onclick="openModal('loginModal')" class="button">Login</button>
+                <?php endif; ?>
+            </div>
+        </div>
     </header>
     <main>
         <div class="messages">
@@ -175,7 +183,7 @@ $msg_stmt->close();
                             if ($userPic):
                                 echo "<img src=\"data:image/jpeg;base64,"; echo base64_encode($userPic); echo"\" alt=\"Profile Picture\">";
                             else:
-                                echo "<img src=\"ressources\\frame.png\">";
+                                echo "<img src=\"resources\\frame.png\">";
                             endif;  
                             if ($msg['user_id'] == $userID):
                                 echo "</a>";
@@ -193,7 +201,7 @@ $msg_stmt->close();
                     <?php if ($userCanDeleteMessages): ?>
                     <div>
                         <button class="icon-button icon-button-thread" onclick="openDeleteModal(<?php echo $msg['id']; ?>, '<?php echo htmlspecialchars(addslashes($msg['user_name'])); ?>')">
-                            <img src="ressources/trash.png" alt="Delete Icon">
+                            <img src="resources/trash.png" alt="Delete Icon">
                             <div class="icon-button-thread-tooltip icon-button-tooltip">Delete message</div>
                         </button>
                     </div>  

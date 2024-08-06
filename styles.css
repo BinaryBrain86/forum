@@ -15,13 +15,13 @@ header {
     width: 100%
 }
 
-nav {
+.header-content {
     display: flex;
     justify-content: flex-end;
     margin-right: 20px;
 }
 
-nav .button {
+.header-content .button {
     background-color: #555;
     color: #fff;
     padding: 10px 20px;
@@ -31,9 +31,38 @@ nav .button {
     font-size: 16px;
 }
 
-nav .button:hover {
+.header-content .button:hover {
     background-color: #777;
     font-size: 16px;
+}
+
+.header-content form{
+    flex-direction: row;
+    margin-top: 0px;
+}
+
+.header-content form button, .header-content form input{
+    margin: 0px;
+}
+
+.header-content {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    margin-left: 20px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
 }
 
 main {
@@ -427,4 +456,39 @@ select {
 
 .styled-select select::-ms-expand {
     display: none;
+}
+
+.ellipsis {
+    overflow: hidden;         
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.search-content {
+    display: block;
+    padding: 10px;
+    width: 100%;
+}
+
+.search-content-title {
+ margin-bottom: 10px;
+}
+
+.search-content a {
+    text-decoration:none;
+    color: #333;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    padding: 5px;
+    
+}
+
+.search-content a:hover {
+    text-decoration:none;
+    color: #ffffff;
+    background-color: #007bff;
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 5px;
+    
 }

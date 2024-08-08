@@ -5,6 +5,7 @@ include 'db.php';
 if (isset($_SESSION['username'])):
     $roleID = $_SESSION['role_id'];
     $userName = $_SESSION['username'];
+    $userID = $_SESSION['user_id'];
 endif;
 
 if (isset($roleID)) {
@@ -14,7 +15,23 @@ if (isset($roleID)) {
     $stmt->bind_result($roleName, $userCanDelete, $userCanEdit);
     $stmt->fetch();
     $stmt->close();
-}?>
+}
+
+if (isset($userName)):
+    // Count unread personal messages
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) as unread_count 
+        FROM personalMessageTable 
+        WHERE User_ID_Receiver = ? AND `Read` = 0
+    ");
+    $stmt->bind_param("i", $userID);
+    $stmt->execute();
+    $stmt->bind_result($unreadCount);
+    $stmt->fetch();
+    $stmt->close();
+endif;
+
+?>
 
 <!DOCTYPE html>
 <html lang="de">
@@ -63,11 +80,16 @@ if (isset($roleID)) {
             <div class="header-left">
                 <form method="get" action="search_results.php" class="search-form">
                     <input type="text" name="search_query" placeholder="Search" required>
-                    <button type="submit">Go</button>
+                    <button type="submit" class="button">Go</button>
                 </form>
             </div>
             <div class="header-right">
             <?php if (isset($userName)): ?>
+                <a href="personalMessages.php" class="button">PM
+                    <?php if ($unreadCount > 0): ?>
+                        <span class="unread-count"><?php echo $unreadCount; ?></span>
+                    <?php endif; ?>
+                </a>
                 <button onclick="openModal('threadModal')" class="button">Create new thread</button>
                 <?php if ($roleName == "Admin"): ?>
                     <a href="admin.php" class="button">Administration</a>

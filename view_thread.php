@@ -27,7 +27,7 @@ if (isset($roleID)) {
 $thread_id = $_GET['thread_id'];
 
 // Handle delete message
-if ($userCanDeleteMessages && ($_SERVER["REQUEST_METHOD"] == "POST") && isset($_POST['msg_id'])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id']) && isset($_POST['msg_id'])) {
     $msg_id = $_POST['msg_id'];
     $delete_stmt = $conn->prepare("DELETE FROM messagetable WHERE ID = ?");
     $delete_stmt->bind_param("i", $msg_id);
@@ -135,7 +135,7 @@ $msg_stmt->close();
             <div class="header-left">
             <form method="get" action="search_results.php" class="search-form">
                     <input type="text" name="search_query" placeholder="Search" required>
-                    <button type="submit">Go</button>
+                    <button type="submit" class="button">Go</button>
                 </form>
             </div>
             <div class="header-right">
@@ -179,6 +179,7 @@ $msg_stmt->close();
                         <?php
                             if ($msg['user_id'] == $userID):
                                 echo "<a href=\"account.php\">";
+                                $userCanDeleteMessages = true;
                             endif;       
                             if ($userPic):
                                 echo "<img src=\"data:image/jpeg;base64,"; echo base64_encode($userPic); echo"\" alt=\"Profile Picture\">";
@@ -271,12 +272,12 @@ $msg_stmt->close();
                 syntax: true,
                 toolbar: '#toolbar-container',
                 },
-                placeholder: 'Compose an epic...',
+                placeholder: 'Write a message...',
                 theme: 'snow',
             });
             </script>
         <?php else: ?>
-            <p><button onclick="openModal('loginModal')" class="button">Login</button>, to write a message.</p>
+            <div class="footer-login-info"><button onclick="openModal('loginModal')" class="button">Login</button>, to write a message.</div>
         <?php endif; ?>
     </main>
     <?php if (isset($_SESSION['username'])): ?>

@@ -87,7 +87,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
 </head>
 <body>
     <header>
-        <h1>Search Results</h1>
+        <h1>Search Results for "<?php if (isset($search)): echo htmlspecialchars($search); endif; ?>"</h1>
         <?php if (isset($_SESSION['username'])): ?>
         <a href="account.php" class="icon-button icon-button-settings"><img src="resources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
         <?php endif; ?>
@@ -95,7 +95,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
             <div class="header-left">
             <form method="get" action="search_results.php" class="search-form">
                     <input type="text" name="search_query" placeholder="Search" required>
-                    <button type="submit">Go</button>
+                    <button type="submit" class="button">Go</button>
                 </form>
             </div>
             <div class="header-right">

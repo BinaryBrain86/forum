@@ -1,6 +1,7 @@
 <?php
 session_start();
-include 'db.php';
+require 'db.php';
+require 'user_info.php';
 
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -8,50 +9,37 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$roleID = $_SESSION['role_id'];
-$userName = $_SESSION['username'];
-
-if (isset($roleID)) {
-    $stmt = $conn->prepare("SELECT Name FROM roletable WHERE ID = ?");
-    $stmt->bind_param("i", $roleID);
-    $stmt->execute();
-    $stmt->bind_result($roleName);
-    $stmt->fetch();
-    $stmt->close();
-}
-
-$userID = $_SESSION['user_id'];
-$userName = $_SESSION['username'];
-
-// Fetch the latest message from each conversation
+// Fetch the latest message from each conversation along with unread count
 $stmt = $conn->prepare("
-    SELECT pmt.*
+    SELECT pmt.*, 
+           COALESCE(unread_counts.unreadCount, 0) AS unreadCount
     FROM personalMessageTable pmt
     INNER JOIN (
-        SELECT LEAST(User_ID_Receiver, User_ID_Sender) as user1, GREATEST(User_ID_Receiver, User_ID_Sender) as user2, MAX(ID) as max_id
+        SELECT LEAST(User_ID_Receiver, User_ID_Sender) AS user1, 
+               GREATEST(User_ID_Receiver, User_ID_Sender) AS user2, 
+               MAX(ID) AS max_id
         FROM personalMessageTable
         WHERE User_ID_Receiver = ? OR User_ID_Sender = ?
         GROUP BY user1, user2
     ) grouped_pmt ON pmt.ID = grouped_pmt.max_id
+    LEFT JOIN (
+        SELECT LEAST(User_ID_Receiver, User_ID_Sender) AS user1, 
+               GREATEST(User_ID_Receiver, User_ID_Sender) AS user2, 
+               COUNT(*) AS unreadCount
+        FROM personalMessageTable
+        WHERE User_ID_Receiver = ? AND `Read` = 0
+        GROUP BY user1, user2
+    ) unread_counts ON unread_counts.user1 = grouped_pmt.user1 AND unread_counts.user2 = grouped_pmt.user2
     ORDER BY pmt.Date_Time DESC
 ");
-$stmt->bind_param("ii", $userID, $userID);
+
+$stmt->bind_param("iii", $userID, $userID, $userID);
 $stmt->execute();
 $result = $stmt->get_result();
 
+
 // Fetch all users for the dropdown
 $usersResult = $conn->query("SELECT ID, username FROM usertable WHERE ID != $userID ORDER BY username ASC");
-
-// Count unread personal messages
-$stmt = $conn->prepare("
-    SELECT COUNT(*) as unread_count 
-    FROM personalMessageTable 
-    WHERE User_ID_Receiver = ? AND `Read` = 0
-");
-$stmt->bind_param("i", $userID);
-$stmt->execute();
-$stmt->bind_result($unreadCount);
-$stmt->fetch();
 
 ?>
 
@@ -81,35 +69,16 @@ $stmt->fetch();
 <body>
     <header>
         <h1>Personal messages</h1>
-        <a href="account.php" class="icon-button icon-button-settings"><img src="resources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
-        <div class="header-content">
-            <div class="header-left">
-                <form method="get" action="search_results.php" class="search-form">
-                    <input type="text" name="search_query" placeholder="Suche" required>
-                    <button type="submit" class="button">Go</button>
-                </form>
-            </div>
-            <div class="header-right">
-                <a href="personalMessages.php" class="button">PM
-                <?php if ($unreadCount > 0): ?>
-                        <span class="unread-count"><?php echo $unreadCount; ?></span>
-                    <?php endif; ?>
-                </a>  
-                <a href="index.php" class="button">Back to overview</a>             
-                <?php if ($roleName == "Admin"): ?>
-                    <a href="admin.php" class="button">Administration</a>
-                <?php endif; ?>
-                <a href="logout.php" class="button">Logout <?php echo htmlspecialchars($userName); ?></a>
-            </div>
-        </div>
+        <?php require 'header.php'; ?>
     </header>
     <main>
-        <h2>Received messages</h2>
+        <h2>Personal conversations</h2>
         <div class="messages">
             <?php while ($message = $result->fetch_assoc()): ?>
                 <div class="pm-conversation">
-                    <div class="pm-info">     
-                        <div class="pm-info-name">By <?php echo htmlspecialchars($message['UserName_Sender']); ?> on</div>
+                    <div class="pm-info">  
+                        <div>With <?php echo ($userID == $message['User_ID_Receiver']) ? $message['UserName_Sender'] : $message['UserName_Receiver'];?></div>   
+                        <div class="pm-info-name">Last by <?php echo htmlspecialchars($message['UserName_Sender']); ?> on</div>
                         <div class="pm-info-date"><?php echo $message['Date_Time']; ?></div>
                     </div>
                     <div class="message-content">
@@ -118,8 +87,8 @@ $stmt->fetch();
                         </a>
                     </div>
                     <div class="pm-read-info">
-                    <?php if ($message['Read'] == 0 && $message['User_ID_Receiver'] == $userID): ?>
-                        <span class="unread-count"><?php echo "1" ?></span>
+                    <?php if ($message['unreadCount'] > 0 && $message['User_ID_Receiver'] == $userID): ?>
+                        <span class="unread-count"><?php echo $message['unreadCount'] ?></span>
                     <?php endif; ?>
                     </div>
                 </div>

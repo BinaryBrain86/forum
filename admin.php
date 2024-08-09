@@ -1,25 +1,26 @@
 <?php
 session_start();
-include 'db.php';
+require 'db.php';
+require 'user_info.php';
 
-// Verifizieren, dass der Benutzer ein Administrator ist
+// Verify that the user is an administrator
 if (!isset($_SESSION['role_id']) || $_SESSION['role_id'] != 1) {
-    header('Location: index.php'); // Falls nicht Administrator, umleiten
+    header('Location: index.php'); // Redirect if not an administrator
     exit();
 }
 
-// Verarbeiten der Formularübermittlung zur Aktualisierung der Benutzerrollen
+// Handle form submission for updating user roles
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['user_roles'])) {
     $user_roles = $_POST['user_roles'];
     foreach ($user_roles as $user_id => $role_id) {
-        // Benutzerrolle aktualisieren
+        // Update user role
         $stmt = $conn->prepare("UPDATE usertable SET Role_ID = ? WHERE ID = ?");
         $stmt->bind_param("ii", $role_id, $user_id);
         $stmt->execute();
     }
 }
 
-// Verarbeiten der Formularübermittlung zur Aktualisierung der Rollenberechtigungen
+// Handle form submission for updating role permissions
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['role_permissions'])) {
     $permissions = $_POST['role_permissions'];
     foreach ($permissions as $role_id => $settings) {
@@ -35,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['role_permissions'])) {
     }
 }
 
-// Verarbeiten der Benutzerlöschung
+// Handle user deletion
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_user_id'])) {
     $delete_user_id = $_POST['delete_user_id'];
     $stmt = $conn->prepare("DELETE FROM usertable WHERE ID = ?");
@@ -43,11 +44,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_user_id'])) {
     $stmt->execute();
 }
 
-// Alle Benutzer abrufen
-$result = $conn->query("SELECT ID, UserName, Name, FirstName, EMail, Role_ID FROM usertable");
+// Retrieve all users
+$result = $conn->query("SELECT ID, UserName, Name, FirstName, EMail, Role_ID FROM usertable ORDER BY UserName ASC");
 $users = $result->fetch_all(MYSQLI_ASSOC);
 
-// Alle Rollen und ihre Berechtigungen abrufen
+// Retrieve all roles and their permissions
 $rolesResult = $conn->query("SELECT ID, Name, DeleteThread, RenameThread, DeleteMessages, DeleteUser FROM roletable");
 $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
 ?>
@@ -68,21 +69,43 @@ $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
         function closeDeleteModal() {
             document.getElementById('deleteModal').style.display = 'none';
         }
-    </script>
 
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('searchInput').addEventListener('keyup', function() {
+                var input = document.getElementById('searchInput');
+                var filter = input.value.toLowerCase();
+                var table = document.querySelector('.user-management-table tbody');
+                var rows = table.getElementsByTagName('tr');
+
+                for (var i = 0; i < rows.length; i++) {
+                    var usernameCell = rows[i].getElementsByTagName('td')[0]; // Username is in the first cell
+                    var nameCell = rows[i].getElementsByTagName('td')[1]; // Name is in the second cell
+                    var firstNameCell = rows[i].getElementsByTagName('td')[2]; // First Name is in the third cell
+                    var emailCell = rows[i].getElementsByTagName('td')[3]; // Email is in the fourth cell
+                    
+                    // Check if any cell matches the filter
+                    var username = usernameCell.textContent || usernameCell.innerText;
+                    var name = nameCell.textContent || nameCell.innerText;
+                    var firstName = firstNameCell.textContent || firstNameCell.innerText;
+                    var email = emailCell.textContent || emailCell.innerText;
+                    
+                    if (username.toLowerCase().indexOf(filter) > -1 ||
+                        name.toLowerCase().indexOf(filter) > -1 ||
+                        firstName.toLowerCase().indexOf(filter) > -1 ||
+                        email.toLowerCase().indexOf(filter) > -1) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            });
+        });
+    </script>
 </head>
 <body>
     <header>
         <h1>Administration Dashboard</h1>
-        <a href="account.php" class="icon-button icon-button-settings"><img src="resources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
-        <div class="header-content">
-            <div class="header-left">
-            </div>
-            <div class="header-right">
-                <a href="index.php" class="button">Back to overview</a>
-                <a href="logout.php" class="button">Logout <?php echo htmlspecialchars($_SESSION['username']); ?></a>
-            </div>
-        </div>
+        <?php require 'header.php'; ?>
     </header>
     <main>
         <!-- Role Settings -->
@@ -115,8 +138,9 @@ $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
 
         <!-- User Management -->
         <h2>User Management</h2>
+        <input type="text" id="searchInput" class="search-input" placeholder="User Search">
         <form method="post" action="admin.php">
-            <table class="admin-tables">
+            <table class="admin-tables user-management-table">
                 <thead>
                     <tr>
                         <th>User Name</th>
@@ -161,9 +185,13 @@ $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
             <h2>Confirm Deletion</h2>
             <p>Are you sure you want to delete user <strong id="deleteUserName"></strong>?</p>
             <form method="post" action="admin.php">
-                <input type="hidden" name="delete_user_id" id="deleteUserId">
-                <button type="submit">Delete</button>
-                <button type="button" onclick="closeDeleteModal()">Cancel</button>
+                <div class="modal-input">
+                    <input type="hidden" name="delete_user_id" id="deleteUserId">
+                </div>
+                <div class="modal-button">
+                    <button type="submit">Delete</button>
+                    <button type="button" onclick="closeDeleteModal()">Cancel</button>
+                </div>
             </form>
         </div>
     </div>

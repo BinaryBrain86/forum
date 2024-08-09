@@ -1,19 +1,7 @@
 <?php
 session_start();
-include 'db.php';
-
-$userID = $_SESSION['user_id'];
-$roleID = $_SESSION['role_id'];
-$userName = $_SESSION['username'];
-
-if (isset($roleID)) {
-    $stmt = $conn->prepare("SELECT Name FROM roletable WHERE ID = ?");
-    $stmt->bind_param("i", $roleID);
-    $stmt->execute();
-    $stmt->bind_result($roleName);
-    $stmt->fetch();
-    $stmt->close();
-}
+require 'db.php';
+require 'user_info.php';
 
 $updateSuccess = false;
 if ($userName && ($_SERVER["REQUEST_METHOD"] == "POST")) {
@@ -54,17 +42,6 @@ if ($userName) {
     $stmt->close();
 }
 
-// Count unread personal messages
-$unreadCountStmt = $conn->prepare("
-    SELECT COUNT(*) as unread_count 
-    FROM personalMessageTable 
-    WHERE User_ID_Receiver = ? AND `Read` = 0
-");
-$unreadCountStmt->bind_param("i", $userID);
-$unreadCountStmt->execute();
-$unreadCountStmt->bind_result($unreadCount);
-$unreadCountStmt->fetch();
-$unreadCountStmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -103,29 +80,9 @@ $unreadCountStmt->close();
     </script>
 </head>
 <body>
-<header>
+    <header>
         <h1>My Account</h1>
-        <a href="account.php" class="icon-button icon-button-settings"><img src="resources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
-        <div class="header-content">
-            <div class="header-left">
-                <form method="get" action="search_results.php" class="search-form">
-                    <input type="text" name="search_query" placeholder="Suche" required>
-                    <button type="submit" class="button">Go</button>
-                </form>
-            </div>
-            <div class="header-right">
-                <a href="personalMessages.php" class="button">PM
-                <?php if ($unreadCount > 0): ?>
-                        <span class="unread-count"><?php echo $unreadCount; ?></span>
-                    <?php endif; ?>
-                </a>  
-                <a href="index.php" class="button">Back to overview</a>             
-                <?php if ($roleName == "Admin"): ?>
-                    <a href="admin.php" class="button">Administration</a>
-                <?php endif; ?>
-                <a href="logout.php" class="button">Logout <?php echo htmlspecialchars($userName); ?></a>
-            </div>
-        </div>
+        <?php require 'header.php'; ?>
     </header>
     <main>
         <?php if ($updateSuccess): ?>
@@ -138,10 +95,8 @@ $unreadCountStmt->close();
                 </div>
             </div>
         <?php endif; ?>
-        <?php if ($userData): ?>
-            
-            <form action="account.php" method="post" class="form-account" enctype="multipart/form-data">
-            
+        <?php if ($userData): ?>       
+            <form action="account.php" method="post" class="form-account" enctype="multipart/form-data">   
                 <div class="form-pic">
                     <div class="form-pic-frame">
                         <?php if ($userData['Pic']): ?>

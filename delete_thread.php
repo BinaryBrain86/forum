@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'db.php';
+require 'db.php';
 
 if (!isset($_SESSION['role_id'])) {
     echo "Role ID not set in session.";

@@ -1,36 +1,7 @@
 <?php
 session_start();
-include 'db.php';
-
-if (isset($_SESSION['username'])):
-    $roleID = $_SESSION['role_id'];
-    $userName = $_SESSION['username'];
-    $userID = $_SESSION['user_id'];
-endif;
-
-if (isset($roleID)) {
-    $stmt = $conn->prepare("SELECT Name, DeleteThread, RenameThread FROM roletable WHERE ID = ?");
-    $stmt->bind_param("i", $roleID);
-    $stmt->execute();
-    $stmt->bind_result($roleName, $userCanDelete, $userCanEdit);
-    $stmt->fetch();
-    $stmt->close();
-}
-
-if (isset($userName)):
-    // Count unread personal messages
-    $stmt = $conn->prepare("
-        SELECT COUNT(*) as unread_count 
-        FROM personalMessageTable 
-        WHERE User_ID_Receiver = ? AND `Read` = 0
-    ");
-    $stmt->bind_param("i", $userID);
-    $stmt->execute();
-    $stmt->bind_result($unreadCount);
-    $stmt->fetch();
-    $stmt->close();
-endif;
-
+require 'db.php';
+require 'user_info.php';
 ?>
 
 <!DOCTYPE html>
@@ -62,8 +33,6 @@ endif;
             if (sender != null) {
                 document.getElementById(sender).style.display = 'none';
             }
-
-
         }
     </script>
 </head>
@@ -71,35 +40,9 @@ endif;
     <header>
         <h1>Welcome to my forum 
         <?php if (isset($userName)): 
-            echo htmlspecialchars($userName); 
+            echo htmlspecialchars($userName);    
         endif; ?> !</h1>
-        <?php if (isset($userName)): ?>
-        <a href="account.php" class="icon-button icon-button-settings"><img src="resources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
-        <?php endif; ?>
-        <div class="header-content">
-            <div class="header-left">
-                <form method="get" action="search_results.php" class="search-form">
-                    <input type="text" name="search_query" placeholder="Search" required>
-                    <button type="submit" class="button">Go</button>
-                </form>
-            </div>
-            <div class="header-right">
-            <?php if (isset($userName)): ?>
-                <a href="personalMessages.php" class="button">PM
-                    <?php if ($unreadCount > 0): ?>
-                        <span class="unread-count"><?php echo $unreadCount; ?></span>
-                    <?php endif; ?>
-                </a>
-                <button onclick="openModal('threadModal')" class="button">Create new thread</button>
-                <?php if ($roleName == "Admin"): ?>
-                    <a href="admin.php" class="button">Administration</a>
-                <?php endif; ?>
-                <a href="logout.php" class="button">Logout <?php if (isset($userName)): echo htmlspecialchars($userName); endif; ?></a>
-            <?php else: ?>
-                <button onclick="openModal('loginModal')" class="button">Login</button>
-            <?php endif; ?>
-            </div>
-        </div>
+        <?php require 'header.php'; ?>
     </header>
     <main>
         <h2>Threads</h2>
@@ -169,9 +112,13 @@ endif;
                 <span class="close" onclick="closeModal('threadModal')">&times;</span>
                 <h2>Create new thread</h2>
                 <form action="create_thread.php" method="post">
-                    <label for="threadName">Thread name:</label>
-                    <input type="text" id="threadName" name="threadName" required>
-                    <button type="submit">Create</button>
+                    <div class="modal-input">
+                        <label for="threadName">Thread name:</label>
+                        <input type="text" id="threadName" name="threadName" required>
+                    </div>
+                    <div class="modal-button">
+                        <button type="submit">Create</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -183,10 +130,14 @@ endif;
                     <span class="close" onclick="closeModal('editModal')">&times;</span>
                     <h2>Edit thread title</h2>
                     <form action="edit_thread.php" method="post">
-                        <input type="hidden" id="editThreadId" name="thread_id">
-                        <label for="editThreadNameInput">Thread name:</label>
-                        <input type="text" id="editThreadNameInput" name="threadName" required>
-                        <button type="submit">Save</button>
+                        <div class="modal-input">
+                            <input type="hidden" id="editThreadId" name="thread_id">
+                            <label for="editThreadNameInput">Thread name:</label>
+                            <input type="text" id="editThreadNameInput" name="threadName" required>
+                        </div>
+                        <div class="modal-button">
+                            <button type="submit">Save</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -195,15 +146,20 @@ endif;
         <?php if ($userCanDelete) : ?>
             <!-- Modal for delete thread-->
             <div id="deleteModal" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal('deleteModal')">&times;</span>
-                <h2>Delete thread</h2>
-                <div class="deleteInfo">You are about to delete the thread >> <b id="deleteThreadName"></b> << Are you sure?</div>
-                <form action="delete_thread.php" method="post">
-                    <input type="hidden" id="deleteThreadId" name="thread_id">
-                    <button type="submit" class="button">Yes</button>
-                    <button type="button" class="button" onclick="closeModal('deleteModal')">No</button>
-                </form>
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('deleteModal')">&times;</span>
+                    <h2>Delete thread</h2>
+                    <div class="deleteInfo">You are about to delete the thread >> <b id="deleteThreadName"></b> << Are you sure?</div>
+                    <form action="delete_thread.php" method="post">
+                        <div class="modal-input">
+                            <input type="hidden" id="deleteThreadId" name="thread_id">
+                        </div>
+                        <div class="modal-button">
+                            <button type="submit" class="button">Yes</button>
+                            <button type="button" class="button" onclick="closeModal('deleteModal')">No</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         <?php endif; ?>
     <?php else: ?>
@@ -213,19 +169,20 @@ endif;
                 <span class="close" onclick="closeModal('loginModal')">&times;</span>
                 <h2>Login</h2>
                 <form action="login.php" method="post">
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" name="username" required>
+                    <div class="modal-input">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" name="username" required>
 
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" required>
-                    
-                    <button type="submit">Login</button>
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="modal-button">
+                        <button type="submit">Login</button>
+                    </div>
                 </form>
-
                 <p>Don't have an account? <a href="register.php">Sign up</a></p>
             </div>
         </div>
-    </div>
     <?php endif; ?>
 </body>
 </html>

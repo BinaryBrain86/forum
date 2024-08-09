@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'db.php';
+require 'db.php';
 
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $result = $stmt->get_result();
 
     if ($result->num_rows == 0) {
-        echo "Empfänger nicht gefunden.";
+        echo "Receiver not found.";
         exit;
     }
 
@@ -34,10 +34,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->bind_param("isiss", $userID, $userName, $receiverID, $receiverName, $message);
 
     if ($stmt->execute()) {
-        echo "Nachricht erfolgreich gesendet.";
+        echo "Message send successfully";
         header('Location: ' . $locationPath);
     } else {
-        echo "Fehler beim Senden der Nachricht.";
+        echo "Error while send the message.";
     }
 
     $stmt->close();

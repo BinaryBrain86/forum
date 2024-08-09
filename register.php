@@ -1,15 +1,15 @@
 <?php
 session_start();
-include 'db.php';
+require 'db.php';
 
 $registrationSuccess = false;
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'];
+    $username = $_POST['reg_username'];
     $name = $_POST['name'];
     $firstname = $_POST['firstname'];
     $email = $_POST['email'];
-    $password = $_POST['password'];
+    $password = $_POST['reg_password'];
     $role_id = 3; // Default role_id for users
 
     // Check if the username or email already exists
@@ -44,17 +44,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>Register</title>
     <link rel="stylesheet" href="styles.css">
     <script>
-        function openModal() {
-            document.getElementById('successModal').style.display = 'block';
+        function openModal(sender) {
+            if (sender != null) {
+                document.getElementById(sender).style.display = 'block';
+            }
         }
 
-        function closeModal() {
-            document.getElementById('successModal').style.display = 'none';
+        function closeModal(sender) {
+            if (sender != null) {
+                document.getElementById(sender).style.display = 'none';
+            }
         }
 
         window.onclick = function(event) {
             if (event.target == document.getElementById('successModal')) {
-                closeModal();
+                closeModal('successModal');
             }
         }
     </script>
@@ -62,13 +66,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
     <header>
         <h1>Sign up</h1>
+        <?php require 'header.php'; ?>
     </header>
     <main>
         <?php if ($registrationSuccess): ?>
             <!-- Success Modal -->
             <div id="successModal" class="modal">
                 <div class="modal-content">
-                    <span class="close" onclick="closeModal()">&times;</span>
+                    <span class="close" onclick="closeModal('successModal')">&times;</span>
                     <h2>Registration succeeded!</h2>
                     <p>Your account was successfully created. You can login now.</p>
                     <a href="index.php" class="button">Back to main page</a>
@@ -77,13 +82,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <script>
                 // Open the modal after registration success
                 window.onload = function() {
-                    openModal();
+                    openModal('successModal');
                 }
             </script>
         <?php else: ?>
             <form action="register.php" method="post">
-                <label for="username">Username:</label>
-                <input type="text" id="username" name="username" required>
+                <label for="reg_username">Username:</label>
+                <input type="text" id="reg_username" name="reg_username" required>
                 
                 <label for="name">Name:</label>
                 <input type="text" id="name" name="name" required>
@@ -94,12 +99,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <label for="email">E-Mail:</label>
                 <input type="email" id="email" name="email" required>
                 
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
+                <label for="reg_password">Password:</label>
+                <input type="reg_password" id="reg_password" name="reg_password" required>
                 
                 <button type="submit">Sign up</button>
             </form>
         <?php endif; ?>
     </main>
+    <!-- Modal for login -->
+    <div id="loginModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('loginModal')">&times;</span>
+                <h2>Login</h2>
+                <form action="login.php" method="post">
+                    <div class="modal-input">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" name="username" required>
+
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="modal-button">
+                        <button type="submit">Login</button>
+                    </div>
+                </form>
+
+                <p>Don't have an account? <a href="register.php">Sign up</a></p>
+            </div>
+        </div>
 </body>
 </html>

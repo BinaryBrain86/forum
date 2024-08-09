@@ -1,27 +1,11 @@
 <?php
 session_start();
-include 'db.php';
+require 'db.php';
+require 'user_info.php';
 
 if (!isset($_GET['thread_id'])) {
     header("Location: index.php");
     exit();
-}
-
-$userID = null;
-if (isset($_SESSION['username'])):
-    $userID = $_SESSION['user_id'];
-    $roleID = $_SESSION['role_id'];
-    $userName = $_SESSION['username'];
-endif;
-
-$userCanDeleteMessages = false;
-if (isset($roleID)) {
-    $stmt = $conn->prepare("SELECT DeleteMessages FROM roletable WHERE ID = ?");
-    $stmt->bind_param("i", $roleID);
-    $stmt->execute();
-    $stmt->bind_result($userCanDeleteMessages);
-    $stmt->fetch();
-    $stmt->close();
 }
 
 $thread_id = $_GET['thread_id'];
@@ -128,25 +112,7 @@ $msg_stmt->close();
 <body>
     <header>
         <h1><?php echo htmlspecialchars($thread_name); ?></h1>
-        <?php if (isset($_SESSION['username'])): ?>
-        <a href="account.php" class="icon-button icon-button-settings"><img src="resources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
-        <?php endif; ?>
-        <div class="header-content">
-            <div class="header-left">
-            <form method="get" action="search_results.php" class="search-form">
-                    <input type="text" name="search_query" placeholder="Search" required>
-                    <button type="submit" class="button">Go</button>
-                </form>
-            </div>
-            <div class="header-right">
-                <a href="index.php" class="button">Back to overview</a>
-                <?php if (isset($_SESSION['username'])): ?>
-                    <a href="logout.php" class="button">Logout <?php if (isset($_SESSION['username'])): echo htmlspecialchars($_SESSION['username']); endif; ?></a>
-                <?php else: ?>
-                    <button onclick="openModal('loginModal')" class="button">Login</button>
-                <?php endif; ?>
-            </div>
-        </div>
+        <?php require 'header.php'; ?>
     </header>
     <main>
         <div class="messages">
@@ -282,34 +248,41 @@ $msg_stmt->close();
     </main>
     <?php if (isset($_SESSION['username'])): ?>
         <?php if ($userCanDeleteMessages) : ?>
-            <!-- Modal for delete thread-->
+            <!-- Modal for delete message-->
             <div id="deleteModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('deleteModal')">&times;</span>
                 <h2>Delete message</h2>
                 <div class="deleteInfo">You are about to delete the message from user >> <b id="userOfMessage"></b> << Are you sure?</div>
                 <form action="view_thread.php?thread_id=<?php echo $thread_id; ?>" method="post">
-                    <input type="hidden" id="deleteMsgId" name="msg_id">
-                    <button type="submit" class="button">Yes</button>
-                    <button type="button" class="button" onclick="closeModal('deleteModal')">No</button>
+                    <div class="modal-input">
+                        <input type="hidden" id="deleteMsgId" name="msg_id">
+                    </div>
+                    <div class="modal-button">
+                        <button type="submit" class="button">Yes</button>
+                        <button type="button" class="button" onclick="closeModal('deleteModal')">No</button>
+                    </div>
                 </form>
             </div>
         <?php endif; ?>
     <?php else: ?>
-        <!-- Modal für neuen Thread -->
-        <div id="loginModal" class="modal">
+         <!-- Modal for login -->
+         <div id="loginModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('loginModal')">&times;</span>
                 <h2>Login</h2>
                 <form action="login.php" method="post">
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" name="username" required>
-
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" required>
-                    
-                    <button type="submit">Login</button>
+                    <div class="modal-input">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" name="username" required>
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="modal-button">
+                        <button type="submit">Login</button>
+                    </div>
                 </form>
+                <p>Don't have an account? <a href="register.php">Sign up</a></p>
             </div>
         </div>
     <?php endif; ?>

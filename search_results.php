@@ -1,22 +1,7 @@
 <?php
 session_start();
-include 'db.php';
-
-$userID = null;
-if (isset($_SESSION['username'])):
-    $userID = $_SESSION['user_id'];
-    $roleID = $_SESSION['role_id'];
-    $userName = $_SESSION['username'];
-endif;
-
-if (isset($roleID)) {
-    $stmt = $conn->prepare("SELECT Name, DeleteThread, RenameThread FROM roletable WHERE ID = ?");
-    $stmt->bind_param("i", $roleID);
-    $stmt->execute();
-    $stmt->bind_result($roleName, $userCanDelete, $userCanEdit);
-    $stmt->fetch();
-    $stmt->close();
-}
+require 'db.php';
+require 'user_info.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
     $search = $_GET['search_query'];
@@ -88,25 +73,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
 <body>
     <header>
         <h1>Search Results for "<?php if (isset($search)): echo htmlspecialchars($search); endif; ?>"</h1>
-        <?php if (isset($_SESSION['username'])): ?>
-        <a href="account.php" class="icon-button icon-button-settings"><img src="resources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
-        <?php endif; ?>
-        <div class="header-content">
-            <div class="header-left">
-            <form method="get" action="search_results.php" class="search-form">
-                    <input type="text" name="search_query" placeholder="Search" required>
-                    <button type="submit" class="button">Go</button>
-                </form>
-            </div>
-            <div class="header-right">
-                <a href="index.php" class="button">Back to overview</a>
-                <?php if (isset($_SESSION['username'])): ?>
-                    <a href="logout.php" class="button">Logout <?php if (isset($_SESSION['username'])): echo htmlspecialchars($_SESSION['username']); endif; ?></a>
-                <?php else: ?>
-                    <button onclick="openModal('loginModal')" class="button">Login</button>
-                <?php endif; ?>
-            </div>
-        </div>
+        <?php require 'header.php'; ?>
     </header>
     <main>
         <?php if (isset($result) && $result->num_rows > 0): ?>
@@ -200,19 +167,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
     </main>
 
     <?php if (isset($userName)): ?>
-        <!-- Modal für neuen Thread -->
-        <div id="threadModal" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal('threadModal')">&times;</span>
-                <h2>Create new thread</h2>
-                <form action="create_thread.php" method="post">
-                    <label for="threadName">Thread name:</label>
-                    <input type="text" id="threadName" name="threadName" required>
-                    <button type="submit">Create</button>
-                </form>
-            </div>
-        </div>
-
         <?php if ($userCanEdit) : ?>
             <!-- Modal for edit thread -->
             <div id="editModal" class="modal">
@@ -220,10 +174,14 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
                     <span class="close" onclick="closeModal('editModal')">&times;</span>
                     <h2>Edit thread title</h2>
                     <form action="edit_thread.php" method="post">
-                        <input type="hidden" id="editThreadId" name="thread_id">
-                        <label for="editThreadNameInput">Thread name:</label>
-                        <input type="text" id="editThreadNameInput" name="threadName" required>
-                        <button type="submit">Save</button>
+                        <div class="modal-input">
+                            <input type="hidden" id="editThreadId" name="thread_id">
+                            <label for="editThreadNameInput">Thread name:</label>
+                            <input type="text" id="editThreadNameInput" name="threadName" required>
+                        </div>
+                        <div class="modal-button">
+                            <button type="submit">Save</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -237,33 +195,37 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
                     <h2>Delete thread</h2>
                     <div class="deleteInfo">You are about to delete the thread >> <b id="deleteThreadName"></b> << Are you sure?</div>
                     <form action="delete_thread.php" method="post">
-                        <input type="hidden" id="deleteThreadId" name="thread_id">
-                        <button type="submit" class="button">Yes</button>
-                        <button type="button" class="button" onclick="closeModal('deleteModal')">No</button>
+                        <div class="modal-input">
+                            <input type="hidden" id="deleteThreadId" name="thread_id">
+                        </div>
+                        <div class="modal-button">
+                            <button type="submit" class="button">Yes</button>
+                            <button type="button" class="button" onclick="closeModal('deleteModal')">No</button>
+                        </div>
                     </form>
                 </div>
             </div>
         <?php endif; ?>
     <?php else: ?>
-         <!-- Modal for login -->
-         <div id="loginModal" class="modal">
+        <!-- Modal for login -->
+        <div id="loginModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('loginModal')">&times;</span>
                 <h2>Login</h2>
                 <form action="login.php" method="post">
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" name="username" required>
-
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" required>
-                    
-                    <button type="submit">Login</button>
+                    <div class="modal-input">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" name="username" required>
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="modal-button">
+                        <button type="submit">Login</button>
+                    </div>
                 </form>
-
                 <p>Don't have an account? <a href="register.php">Sign up</a></p>
             </div>
         </div>
-    </div>
     <?php endif; ?>
 </body>
 </html>

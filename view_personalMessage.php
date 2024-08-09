@@ -1,6 +1,7 @@
 <?php
 session_start();
-include 'db.php';
+require 'db.php';
+require 'user_info.php';
 
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -17,18 +18,17 @@ if (!isset($_GET['user1']) || !isset($_GET['user2'])) {
 $user1 = $_GET['user1'];
 $user2 = $_GET['user2'];
 
-$userID = $_SESSION['user_id'];
-$roleID = $_SESSION['role_id'];
-$userName = $_SESSION['username'];
-
-if (isset($roleID)) {
-    $getRoleNameStmt = $conn->prepare("SELECT Name FROM roletable WHERE ID = ?");
-    $getRoleNameStmt->bind_param("i", $roleID);
-    $getRoleNameStmt->execute();
-    $getRoleNameStmt->bind_result($roleName);
-    $getRoleNameStmt->fetch();
-    $getRoleNameStmt->close();
-}
+// Update the "Read" status for all messages in this conversation where the current user is the receiver
+$updateStmt = $conn->prepare("
+    UPDATE personalMessageTable 
+    SET `Read` = 1 
+    WHERE User_ID_Receiver = ? 
+    AND ((User_ID_Sender = ? AND User_ID_Receiver = ?) 
+        OR (User_ID_Sender = ? AND User_ID_Receiver = ?))
+");
+$updateStmt->bind_param("iiiii", $userID, $user1, $user2, $user2, $user1);
+$updateStmt->execute();
+$updateStmt->close();
 
 // Fetch all messages between the two users
 $pm_stmt = $conn->prepare("
@@ -58,30 +58,7 @@ while ($pm_stmt->fetch()) {
 }
 $pm_stmt->close();
 
-// Update the "Read" status for all messages in this conversation where the current user is the receiver
-$updateStmt = $conn->prepare("
-    UPDATE personalMessageTable 
-    SET `Read` = 1 
-    WHERE User_ID_Receiver = ? 
-    AND ((User_ID_Sender = ? AND User_ID_Receiver = ?) 
-        OR (User_ID_Sender = ? AND User_ID_Receiver = ?))
-");
-$updateStmt->bind_param("iiiii", $userID, $user1, $user2, $user2, $user1);
-$updateStmt->execute();
-$updateStmt->close();
-
-// Count unread personal messages
-$unreadCountStmt = $conn->prepare("
-    SELECT COUNT(*) as unread_count 
-    FROM personalMessageTable 
-    WHERE User_ID_Receiver = ? AND `Read` = 0
-");
-$unreadCountStmt->bind_param("i", $userID);
-$unreadCountStmt->execute();
-$unreadCountStmt->bind_result($unreadCount);
-$unreadCountStmt->fetch();
-$unreadCountStmt->close();
-
+// Get senders name for page title
 $getSendersNameStmt = $conn->prepare("SELECT UserName FROM usertable WHERE ID = ?");
 if($userID == $user1):
     $getSendersNameStmt->bind_param("i", $user2);
@@ -119,28 +96,8 @@ $getSendersNameStmt->close();
 </head>
 <body>
     <header>
-        <h1>Personal conversation with <?php echo (mb_strlen(trim($ConversationUserName)) === 0) ? "deleted user" : htmlspecialchars($ConversationUserName); ?></h1>
-        <a href="account.php" class="icon-button icon-button-settings"><img src="resources/settings.png" alt="Settings Icon"><div class="icon-button-settings-tooltip icon-button-tooltip">My account</div></a>
-        <div class="header-content">
-            <div class="header-left">
-                <form method="get" action="search_results.php" class="search-form">
-                    <input type="text" name="search_query" placeholder="Suche" required>
-                    <button type="submit" class="button">Go</button>
-                </form>
-            </div>
-            <div class="header-right">
-                <a href="personalMessages.php" class="button">PM
-                <?php if ($unreadCount > 0): ?>
-                        <span class="unread-count"><?php echo $unreadCount; ?></span>
-                    <?php endif; ?>
-                </a>  
-                <a href="index.php" class="button">Back to overview</a>             
-                <?php if ($roleName == "Admin"): ?>
-                    <a href="admin.php" class="button">Administration</a>
-                <?php endif; ?>
-                <a href="logout.php" class="button">Logout <?php echo htmlspecialchars($userName); ?></a>
-            </div>
-        </div>
+        <h1>Personal conversation with <?php echo (mb_strlen(trim($ConversationUserName)) === 0) ? " a deleted user" : htmlspecialchars($ConversationUserName); ?></h1>
+        <?php require 'header.php'; ?>
     </header>
     <main>
         <div class="messages">

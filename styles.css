@@ -43,7 +43,7 @@ header {
     box-shadow: 2px 2px 0 #000;
 }
 
-.header-content .button:hover, .footer-login-info .button {
+.header-content .button:hover, .footer-login-info .button:hover {
     background-color: #777;
     font-size: 16px;
 }

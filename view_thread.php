@@ -1,8 +1,9 @@
 <?php
-session_start();
-require 'db.php';
-require 'user_info.php';
+session_start(); // Start the session to access session variables like user ID.
+require 'db.php'; // Include the database connection script.
+require 'user_info.php'; // Include the script that fetches user-related information.
 
+// Redirect to index page if thread_id is not provided
 if (!isset($_GET['thread_id'])) {
     header("Location: index.php");
     exit();
@@ -10,26 +11,24 @@ if (!isset($_GET['thread_id'])) {
 
 $thread_id = $_GET['thread_id'];
 
-// Handle delete message
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id']) && isset($_POST['msg_id'])) {
-    $msg_id = $_POST['msg_id'];
-    $delete_stmt = $conn->prepare("DELETE FROM messagetable WHERE ID = ?");
-    $delete_stmt->bind_param("i", $msg_id);
-    $delete_stmt->execute();
-    $delete_stmt->close();
-    header("Location: view_thread.php?thread_id=" . $thread_id);
-    exit();
-}
-
-// Handle new message submission
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])  && isset($_POST['message'])) {
-    $message = $_POST['message'];
-
-    $stmt = $conn->prepare("INSERT INTO messagetable (User_ID, UserName, Thread_ID, Message) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("isis", $userID, $userName, $thread_id, $message);
-    $stmt->execute();
-    $stmt->close();
-
+// Process POST requests for message operations
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])) {
+    if (isset($_POST['msg_id'])) { // Handle message deletion
+        $msg_id = $_POST['msg_id'];
+        $stmt = $conn->prepare("DELETE FROM messagetable WHERE ID = ?");
+        $stmt->bind_param("i", $msg_id);
+        $stmt->execute();
+        $stmt->close();
+    } 
+    // Handle new message submission
+    elseif (isset($_POST['message'])) { 
+        $message = $_POST['message'];
+        $stmt = $conn->prepare("INSERT INTO messagetable (User_ID, UserName, Thread_ID, Message) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("isis", $userID, $userName, $thread_id, $message);
+        $stmt->execute();
+        $stmt->close();
+    }
+    // Redirect after processing
     header("Location: view_thread.php?thread_id=$thread_id");
     exit();
 }
@@ -79,50 +78,49 @@ $msg_stmt->close();
     <script src="quill/katex.min.js"></script>
 
     <script>
+        // Open a modal window by setting its display style to 'block'.
         function openModal(sender) {
             if (sender != null) {
                 document.getElementById(sender).style.display = 'block';
             }
         }
 
+        // Close a modal window by setting its display style to 'none'.
         function closeModal(sender) {
             if (sender != null) {
                 document.getElementById(sender).style.display = 'none';
             }
         }
 
+        // Function to handle form submission and update hidden input with the editor's content.
         function submitForm() {
             const message = document.querySelector('input[name=message]');
-            message.value = quill.root.innerHTML;
-            return true;
-        }   
+            message.value = quill.root.innerHTML; // Set the hidden input with the editor's content.
+            return true; // Allow the form to submit.
+        }
 
+        // Open a modal for deleting a message.
         function openDeleteModal(mgsId, userOfMessage) {
             document.getElementById('deleteMsgId').value = mgsId;
             document.getElementById('userOfMessage').innerText = userOfMessage;
             document.getElementById('deleteModal').style.display = 'block';
-        }
-
-        function closeModal(sender) {
-            if (sender != null) {
-                document.getElementById(sender).style.display = 'none';
-            }
         }
     </script>
 </head>
 <body>
     <header>
         <h1><?php echo htmlspecialchars($thread_name); ?></h1>
-        <?php require 'header.php'; ?>
+        <?php require 'header.php'; // Include the header file for consistent page layout. ?>
     </header>
     <main>
         <div class="messages">
             <?php foreach ($messages as $msg): 
-
-                // Fetch current user information
+                // Loop through each message of the respective thread
+                // Fetch user information for each message
                 $userPic = null;
                 $userExists = false;
-                 // Check if the username was deleted
+                
+                // Check if user exist in database
                 $stmt = $conn->prepare("SELECT COUNT(*) FROM usertable WHERE ID = ?");
                 $stmt->bind_param("i", $msg['user_id']);
                 $stmt->execute();
@@ -130,9 +128,9 @@ $msg_stmt->close();
                 $stmt->fetch();
                 $stmt->close();
 
-                if ($count > 0) {
+                // User exists when count is '1', so the picture can be fetched
+                if ($count == 1) {
                     $userExists = true;
-
                     $stmt = $conn->prepare("SELECT Pic FROM usertable WHERE ID = ?");
                     $stmt->bind_param("i", $msg['user_id']);
                     $stmt->execute();
@@ -144,30 +142,43 @@ $msg_stmt->close();
                 <div class="message">
                     <div class="message-info">
                         <?php
+                            // Check if the current message belongs to the logged-in user
                             if ($msg['user_id'] == $userID):
                                 echo "<a href=\"account.php\">";
-                                $userCanDeleteMessages = true;
+                                $userCanDeleteMessages = true; // Allow message deletion for the user
                             endif;       
+
+                            // Display user profile picture if available
                             if ($userPic):
-                                echo "<img src=\"data:image/jpeg;base64,"; echo base64_encode($userPic); echo"\" alt=\"Profile Picture\">";
+                                echo "<img src=\"data:image/jpeg;base64,"; 
+                                echo base64_encode($userPic); 
+                                echo "\" alt=\"Profile Picture\">";
                             else:
+                                // Display a default image if profile picture is not available
                                 echo "<img src=\"resources\\frame.png\">";
                             endif;  
+
+                            // Close the link if it was opened for the user's account
                             if ($msg['user_id'] == $userID):
                                 echo "</a>";
                             endif; 
                         ?>  
+                        <!-- Display the name of the user who posted the message -->
                         <div class="message-info-name"><?php echo htmlspecialchars($msg['user_name']); ?></div>
+                        <!-- Display the date and time of the message -->
                         <div class="message-info-date"><?php echo $msg['date_time']; ?></div>
-                        <?php if ($userExists == false): ?>
+                        <?php if (!$userExists): ?>
+                            <!-- Notify if the user who posted the message has been deleted -->
                             <div class="message-info-userDeleted">User deleted</div>
                         <?php endif; ?>  
                     </div>
+                    <!-- Display the content of the message, preserving line breaks -->
                     <div class="message-content">
                         <?php echo nl2br(($msg['content'])); ?>
                     </div>
-                    <?php if ($userCanDeleteMessages): ?>
+                    <?php if (isset($userCanDeleteMessages) && $userCanDeleteMessages): ?>
                     <div>
+                        <!-- Button to open the delete confirmation modal -->
                         <button class="icon-button icon-button-thread" onclick="openDeleteModal(<?php echo $msg['id']; ?>, '<?php echo htmlspecialchars(addslashes($msg['user_name'])); ?>')">
                             <img src="resources/trash.png" alt="Delete Icon">
                             <div class="icon-button-thread-tooltip icon-button-tooltip">Delete message</div>
@@ -244,31 +255,32 @@ $msg_stmt->close();
             });
             </script>
         <?php else: ?>
-            <div class="footer-login-info"><button onclick="openModal('loginModal')" class="button">Login</button>, to write a message.</div>
+            <div class="footer-login-info"><button onclick="openModal('loginModal')" class="button">Login</button> to write a message.</div>
         <?php endif; ?>
     </main>
     <?php if (isset($_SESSION['username'])): ?>
-        <?php if ($userCanDeleteMessages) : ?>
-            <!-- Modal for delete message-->
+        <?php if (isset($userCanDeleteMessages) && $userCanDeleteMessages) : ?>
+            <!-- Modal for delete message -->
             <div id="deleteModal" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal('deleteModal')">&times;</span>
-                <h2>Delete message</h2>
-                <div class="deleteInfo">You are about to delete the message from user >> <b id="userOfMessage"></b> << Are you sure?</div>
-                <form action="view_thread.php?thread_id=<?php echo $thread_id; ?>" method="post">
-                    <div class="modal-input">
-                        <input type="hidden" id="deleteMsgId" name="msg_id">
-                    </div>
-                    <div class="modal-button">
-                        <button type="submit" class="button">Yes</button>
-                        <button type="button" class="button" onclick="closeModal('deleteModal')">No</button>
-                    </div>
-                </form>
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('deleteModal')">&times;</span>
+                    <h2>Delete message</h2>
+                    <div class="deleteInfo">You are about to delete the message from user >> <b id="userOfMessage"></b> << Are you sure?</div>
+                    <form action="view_thread.php?thread_id=<?php echo $thread_id; ?>" method="post">
+                        <div class="modal-input">
+                            <input type="hidden" id="deleteMsgId" name="msg_id">
+                        </div>
+                        <div class="modal-button">
+                            <button type="submit" class="button">Yes</button>
+                            <button type="button" class="button" onclick="closeModal('deleteModal')">No</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         <?php endif; ?>
     <?php else: ?>
-         <!-- Modal for login -->
-         <div id="loginModal" class="modal">
+        <!-- Modal for login -->
+        <div id="loginModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('loginModal')">&times;</span>
                 <h2>Login</h2>

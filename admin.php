@@ -1,7 +1,7 @@
 <?php
-session_start();
-require 'db.php';
-require 'user_info.php';
+session_start(); // Start the session to access session variables like user ID.
+require 'db.php'; // Include the database connection script.
+require 'user_info.php'; // Include the script that fetches user-related information.
 
 // Verify that the user is an administrator
 if (!isset($_SESSION['role_id']) || $_SESSION['role_id'] != 1) {
@@ -13,7 +13,7 @@ if (!isset($_SESSION['role_id']) || $_SESSION['role_id'] != 1) {
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['user_roles'])) {
     $user_roles = $_POST['user_roles'];
     foreach ($user_roles as $user_id => $role_id) {
-        // Update user role
+        // Update user role in the database
         $stmt = $conn->prepare("UPDATE usertable SET Role_ID = ? WHERE ID = ?");
         $stmt->bind_param("ii", $role_id, $user_id);
         $stmt->execute();
@@ -24,11 +24,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['user_roles'])) {
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['role_permissions'])) {
     $permissions = $_POST['role_permissions'];
     foreach ($permissions as $role_id => $settings) {
+        // Determine if each permission is enabled or disabled
         $deleteThread = isset($settings['DeleteThread']) ? 1 : 0;
         $renameThread = isset($settings['RenameThread']) ? 1 : 0;
         $deleteMessage = isset($settings['DeleteMessage']) ? 1 : 0;
         $deleteUser = isset($settings['DeleteUser']) ? 1 : 0;
 
+        // Update role permissions in the database
         $stmt = $conn->prepare("UPDATE roletable SET DeleteThread = ?, RenameThread = ?, DeleteMessages = ?, DeleteUser = ? WHERE ID = ?");
         $stmt->bind_param("iiiii", $deleteThread, $renameThread, $deleteMessage, $deleteUser, $role_id);
         $stmt->execute();
@@ -39,16 +41,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['role_permissions'])) {
 // Handle user deletion
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_user_id'])) {
     $delete_user_id = $_POST['delete_user_id'];
+    // Delete the specified user from the database
     $stmt = $conn->prepare("DELETE FROM usertable WHERE ID = ?");
     $stmt->bind_param("i", $delete_user_id);
     $stmt->execute();
 }
 
-// Retrieve all users
+// Retrieve all users from the database
 $result = $conn->query("SELECT ID, UserName, Name, FirstName, EMail, Role_ID FROM usertable ORDER BY UserName ASC");
 $users = $result->fetch_all(MYSQLI_ASSOC);
 
-// Retrieve all roles and their permissions
+// Retrieve all roles and their permissions from the database
 $rolesResult = $conn->query("SELECT ID, Name, DeleteThread, RenameThread, DeleteMessages, DeleteUser FROM roletable");
 $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
 ?>
@@ -61,16 +64,19 @@ $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
     <link rel="icon" type="image/x-icon" href="resources/favicon.png">
     <link rel="stylesheet" href="styles.css">
     <script>
+        // Function to open the delete confirmation modal
         function openDeleteModal(userId, userName) {
             document.getElementById('deleteModal').style.display = 'block';
             document.getElementById('deleteUserId').value = userId;
             document.getElementById('deleteUserName').innerText = userName;
         }
 
+        // Function to close the delete confirmation modal
         function closeDeleteModal() {
             document.getElementById('deleteModal').style.display = 'none';
         }
 
+        // Add event listener for real-time user search filtering
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('searchInput').addEventListener('keyup', function() {
                 var input = document.getElementById('searchInput');
@@ -78,18 +84,19 @@ $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
                 var table = document.querySelector('.user-management-table tbody');
                 var rows = table.getElementsByTagName('tr');
 
+                // Filter table rows based on search input
                 for (var i = 0; i < rows.length; i++) {
-                    var usernameCell = rows[i].getElementsByTagName('td')[0]; // Username is in the first cell
-                    var nameCell = rows[i].getElementsByTagName('td')[1]; // Name is in the second cell
-                    var firstNameCell = rows[i].getElementsByTagName('td')[2]; // First Name is in the third cell
-                    var emailCell = rows[i].getElementsByTagName('td')[3]; // Email is in the fourth cell
+                    var usernameCell = rows[i].getElementsByTagName('td')[0];
+                    var nameCell = rows[i].getElementsByTagName('td')[1];
+                    var firstNameCell = rows[i].getElementsByTagName('td')[2];
+                    var emailCell = rows[i].getElementsByTagName('td')[3];
                     
-                    // Check if any cell matches the filter
                     var username = usernameCell.textContent || usernameCell.innerText;
                     var name = nameCell.textContent || nameCell.innerText;
                     var firstName = firstNameCell.textContent || firstNameCell.innerText;
                     var email = emailCell.textContent || emailCell.innerText;
                     
+                    // Display row if it matches the search filter
                     if (username.toLowerCase().indexOf(filter) > -1 ||
                         name.toLowerCase().indexOf(filter) > -1 ||
                         firstName.toLowerCase().indexOf(filter) > -1 ||
@@ -109,7 +116,7 @@ $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
         <?php require 'header.php'; ?>
     </header>
     <main>
-        <!-- Role Settings -->
+        <!-- Role Settings Section -->
         <h2>Role Settings</h2>
         <form method="post" action="admin.php">
             <table class="admin-tables permissions-table">
@@ -137,7 +144,7 @@ $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
             <button type="submit">Save Role Permissions</button>
         </form>
 
-        <!-- User Management -->
+        <!-- User Management Section -->
         <h2>User Management</h2>
         <input type="text" id="searchInput" class="search-input" placeholder="User Search">
         <form method="post" action="admin.php">
@@ -169,6 +176,7 @@ $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
                             </div>
                         </td>
                         <td>
+                            <!-- Button to open delete confirmation modal -->
                             <button type="button" onclick="openDeleteModal(<?php echo $user['ID']; ?>, '<?php echo htmlspecialchars($user['UserName']); ?>')">Delete</button>
                         </td>
                     </tr>

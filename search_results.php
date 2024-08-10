@@ -1,11 +1,15 @@
 <?php
-session_start();
-require 'db.php';
-require 'user_info.php';
+session_start(); // Start the session to access session variables like user ID.
+require 'db.php'; // Include the database connection script.
+require 'user_info.php'; // Include the script that fetches user-related information.
 
+// Check if the request method is GET and if a search query is present.
 if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
-    $search = $_GET['search_query'];
+    $search = $_GET['search_query']; // Get the search query from the URL.
+    
+    // Prepare a SQL query that searches for threads and messages containing the search query.
     $stmt = $conn->prepare("
+        -- Select threads that match the search query by the thread name
         SELECT 'thread' AS type, 
                t.ID AS thread_id, 
                NULL AS message_id, 
@@ -15,8 +19,14 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
                t.Date_Time AS date,
                NULL AS user_id
         FROM threadtable t
+
+        -- Filter threads where the name matches the search query
         WHERE t.Name LIKE ?
-        UNION
+
+        -- Combine results with the next part of the query
+        UNION 
+
+        -- Select messages that match the search query by the message content
         SELECT 'message' AS type, 
                m.Thread_ID AS thread_id, 
                m.ID AS message_id, 
@@ -26,14 +36,21 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
                m.Date_Time AS date,
                m.User_ID AS user_id
         FROM messagetable m
+
+        -- Join with threadtable to get thread names
         LEFT JOIN threadtable t ON m.Thread_ID = t.ID
+
+        -- Filter messages where the content matches the search query
         WHERE m.Message LIKE ?
+
+        -- Order the results by date in descending order
         ORDER BY date DESC
     ");
-    $search_param = "%" . $search . "%";
-    $stmt->bind_param("ss", $search_param, $search_param);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    
+    $search_param = "%" . $search . "%"; // Format the search query for use in SQL LIKE clause.
+    $stmt->bind_param("ss", $search_param, $search_param); // Bind the search parameter twice, once for each LIKE clause.
+    $stmt->execute(); // Execute the SQL query.
+    $result = $stmt->get_result(); // Get the result set from the executed query.
 }
 
 ?>
@@ -43,27 +60,31 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
 <head>
     <meta charset="UTF-8">
     <title>Search Results</title>
-    <link rel="icon" type="image/x-icon" href="resources/favicon.ico">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/x-icon" href="resources/favicon.ico"> <!-- Favicon link -->
+    <link rel="stylesheet" href="styles.css"> <!-- Link to the external stylesheet -->
     <script>
+        // Open a modal window by setting its display style to 'block'.
         function openModal(sender) {
             if (sender != null) {
                 document.getElementById(sender).style.display = 'block';
             }
         }
 
+        // Open a modal for deleting a thread, filling it with thread data.
         function openDeleteModal(threadId, threadName) {
             document.getElementById('deleteThreadId').value = threadId;
             document.getElementById('deleteThreadName').innerText = threadName;
             document.getElementById('deleteModal').style.display = 'block';
         }
 
+        // Open a modal for editing a thread, filling it with thread data.
         function openEditModal(threadId, threadName) {
             document.getElementById('editThreadId').value = threadId;
             document.getElementById('editThreadNameInput').value = threadName;
             document.getElementById('editModal').style.display = 'block';
         }
 
+        // Close a modal window by setting its display style to 'none'.
         function closeModal(sender) {
             if (sender != null) {
                 document.getElementById(sender).style.display = 'none';
@@ -74,24 +95,24 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
 <body>
     <header>
         <h1>Search Results for "<?php if (isset($search)): echo htmlspecialchars($search); endif; ?>"</h1>
-        <?php require 'header.php'; ?>
+        <?php require 'header.php'; // Include the header file for consistent page layout. ?>
     </header>
     <main>
         <?php if (isset($result) && $result->num_rows > 0): ?>
             <?php while ($row = $result->fetch_assoc()): ?>
-                <?php if ($row['type'] == 'thread'): ?>
+                <?php if ($row['type'] == 'thread'): // Check if the result is a thread ?>
                     <div class="thread">
                         <div class="thread-title">
                             <a href="view_thread.php?thread_id=<?php echo $row['thread_id']; ?>" class="thread-link">
                                 <div class="thread-main-title">
-                                    <?php echo htmlspecialchars($row['content']); ?>
+                                    <?php echo htmlspecialchars($row['content']); // Display the thread name ?>
                                 </div>
                                 <div class="thread-sub-title">
                                     <div>by <?php echo htmlspecialchars($row['author']); ?> on <?php echo htmlspecialchars($row['date']); ?></div>
                                 </div>
                             </a>
                         </div>
-                        <?php if (isset($userName)): ?>
+                        <?php if (isset($userName)): // Show thread actions if the user is logged in ?>
                         <div class="thread-action">
                         <?php if ($userCanEdit): ?>
                             <button class="icon-button icon-button-thread" onclick="openEditModal(<?php echo $row['thread_id']; ?>, '<?php echo htmlspecialchars(addslashes($row['content'])); ?>')">
@@ -108,11 +129,12 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
                         </div>
                 <?php endif; ?>
                     </div>
-                <?php elseif ($row['type'] == 'message'): 
+                <?php elseif ($row['type'] == 'message'): // If the result is a message 
                     // Fetch current user information
                     $userPic = null;
                     $userExists = false;
-                    // Check if the username was deleted
+
+                    // Check if the username was deleted by counting rows for the user ID.
                     $stmt = $conn->prepare("SELECT COUNT(*) FROM usertable WHERE ID = ?");
                     $stmt->bind_param("i", $row['user_id']);
                     $stmt->execute();
@@ -123,6 +145,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
                     if ($count > 0) {
                         $userExists = true;
 
+                        // Fetch the user's profile picture.
                         $stmt = $conn->prepare("SELECT Pic FROM usertable WHERE ID = ?");
                         $stmt->bind_param("i", $row['user_id']);
                         $stmt->execute();
@@ -134,12 +157,12 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
                         <div class="message-info">
                             <?php
                                 if ($row['user_id'] == $userID):
-                                    echo "<a href=\"account.php\">";
+                                    echo "<a href=\"account.php\">"; // Link to account if the message belongs to the current user.
                                 endif;       
                                 if ($userPic):
-                                    echo "<img src=\"data:image/jpeg;base64,"; echo base64_encode($userPic); echo"\" alt=\"Profile Picture\">";
+                                    echo "<img src=\"data:image/jpeg;base64,"; echo base64_encode($userPic); echo"\" alt=\"Profile Picture\">"; // Display user profile picture.
                                 else:
-                                    echo "<img src=\"resources\\frame.png\">";
+                                    echo "<img src=\"resources\\frame.png\">"; // Default image if no picture is found.
                                 endif;  
                                 if ($row['user_id'] == $userID):
                                     echo "</a>";
@@ -167,7 +190,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
         <?php endif; ?>
     </main>
 
-    <?php if (isset($userName)): ?>
+    <?php if (isset($userName)): // If the user is logged in, show modals for editing/deleting threads ?>
         <?php if ($userCanEdit) : ?>
             <!-- Modal for edit thread -->
             <div id="editModal" class="modal">
@@ -208,7 +231,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
             </div>
         <?php endif; ?>
     <?php else: ?>
-        <!-- Modal for login -->
+        <!-- Modal for login if the user is not logged in -->
         <div id="loginModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('loginModal')">&times;</span>

@@ -58,6 +58,7 @@ $roles = $rolesResult->fetch_all(MYSQLI_ASSOC);
 <head>
     <meta charset="UTF-8">
     <title>Administration Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="resources/favicon.png">
     <link rel="stylesheet" href="styles.css">
     <script>
         function openDeleteModal(userId, userName) {

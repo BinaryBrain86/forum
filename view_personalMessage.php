@@ -76,6 +76,7 @@ $getSendersNameStmt->close();
 <head>
     <meta charset="UTF-8">
     <title>Personal conversation</title>
+    <link rel="icon" type="image/x-icon" href="resources/favicon.png">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="quill/quill.snow.css">
     <link rel="stylesheet" href="quill/atom-one-dark.min.css"/>

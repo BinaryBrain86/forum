@@ -43,6 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['search_query'])) {
 <head>
     <meta charset="UTF-8">
     <title>Search Results</title>
+    <link rel="icon" type="image/x-icon" href="resources/favicon.ico">
     <link rel="stylesheet" href="styles.css">
     <script>
         function openModal(sender) {

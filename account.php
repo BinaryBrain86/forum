@@ -49,6 +49,7 @@ if ($userName) {
 <head>
     <meta charset="UTF-8">
     <title>My Account</title>
+    <link rel="icon" type="image/x-icon" href="resources/favicon.png">
     <link rel="stylesheet" href="styles.css">
 
     <script>
@@ -75,7 +76,14 @@ if ($userName) {
         function uploadPic() {
             var fileInput = document.getElementById('pic');
             var fileName = document.getElementById('file-name');
-            fileName.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : 'No file chosen';
+            
+            if (fileInput.files.length > 0) {
+                fileName.textContent = fileInput.files[0].name;
+                document.getElementById('file-upload-info').style.display = 'block';
+            } else {
+                fileName.textContent = 'No file chosen';
+                document.getElementById('file-upload-info').style.display = 'none';
+            }   
         }
     </script>
 </head>
@@ -110,8 +118,11 @@ if ($userName) {
                             <label for="pic" class="file-input-label">Choose file</label>
                             <input type="file" id="pic" name="pic" class="file-input" onchange="uploadPic()">
                         </div>
-                        <p id="file-name" class="file-name">No file chosen</p>
-                        <p for="pic" class="form-pic-upload-info">Maximum size is 300 x 300 Pixel</p>
+                        <div>
+                            <p id="file-name" class="file-name">No file chosen</p>
+                            <p class="form-pic-upload-info">Maximum size is 300 x 300 Pixel</p>
+                            <p id="file-upload-info" class="file-upload-info form-pic-upload-info">Press 'Update' to change your picture!</p>
+                        </div>
                     </div>
                 </div>
                 <div class="form-data">

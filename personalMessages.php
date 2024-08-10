@@ -48,6 +48,7 @@ $usersResult = $conn->query("SELECT ID, username FROM usertable WHERE ID != $use
 <head>
     <meta charset="UTF-8">
     <title>Personal messages</title>
+    <link rel="icon" type="image/x-icon" href="resources/favicon.png">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="quill/quill.snow.css">
     <link rel="stylesheet" href="quill/atom-one-dark.min.css"/>

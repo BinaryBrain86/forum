@@ -8,7 +8,8 @@ require 'user_info.php';
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Forum</title>
+    <title>My Forum</title>
+    <link rel="icon" type="image/x-icon" href="resources/favicon.png">
     <link rel="stylesheet" href="styles.css">
     <script>
         function openModal(sender) {

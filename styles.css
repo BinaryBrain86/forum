@@ -374,7 +374,7 @@ form button {
 
 .form-pic-upload {
     display: grid;
-    justify-content: start;
+    width: 300px;
 }
 
 .form-pic-upload-info {
@@ -388,10 +388,20 @@ form button {
     max-height: 300px;
 }
 
+.form-pic-frame {
+    margin-bottom: 27px;
+}
+
 .file-input-container {
     position: relative;
     display: inline-block;
-    width: 200px;
+    width: 300px;
+}
+
+.file-upload-info {
+    font-weight: bold;
+    color: red;
+    display: none;
 }
 
 .file-input {

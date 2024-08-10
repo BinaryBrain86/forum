@@ -66,6 +66,7 @@ $msg_stmt->close();
 <html lang="de">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="resources/favicon.png">
     <title><?php echo htmlspecialchars($thread_name); ?></title>
     
     <link rel="stylesheet" href="styles.css">

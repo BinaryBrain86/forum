@@ -24,6 +24,7 @@ if (isset($userName)): ?>
         if (isset($userName)):
             // If the current page is the index page, show the "Create new thread" button
             if(basename($_SERVER['PHP_SELF']) == "index.php"):
+                echo "<a href=\"project.php\" class=\"button\">Project</a>";
                 echo "<button onclick=\"openModal('threadModal')\" class=\"button\">Create new thread</button>";
             else:
                 // If not on the index page, show a "Back to overview" link
